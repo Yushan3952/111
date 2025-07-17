@@ -1,0 +1,105 @@
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+
+function LocationSelector({ onSelect }) {
+  useMapEvents({
+    click(e) {
+      onSelect(e.latlng);
+    },
+  });
+  return null;
+}
+
+// 新增元件讓地圖能動態跳到定位位置
+function ChangeView({ center }) {
+  const map = useMap();
+  if (center) {
+    map.setView(center, 16);
+  }
+  return null;
+}
+
+export default function App() {
+  const [markers, setMarkers] = useState([]);
+  const [selectedPos, setSelectedPos] = useState(null);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [loadingLocation, setLoadingLocation] = useState(true);
+
+  // 取得手機GPS定位
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      alert('瀏覽器不支援定位功能');
+      setLoadingLocation(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setSelectedPos({ lat: latitude, lng: longitude });
+        setLoadingLocation(false);
+      },
+      () => {
+        alert('取得定位失敗，請點選地圖選擇位置');
+        setLoadingLocation(false);
+      }
+    );
+  }, []);
+
+  const handleAddMarker = () => {
+    if (selectedPos && photoFile) {
+      const newMarker = {
+        id: Date.now(),
+        position: selectedPos,
+        photoURL: URL.createObjectURL(photoFile),
+      };
+      setMarkers([...markers, newMarker]);
+      setPhotoFile(null);
+    } else {
+      alert('請先選擇位置並拍照');
+    }
+  };
+
+  if (loadingLocation) {
+    return <div style={{ padding: 20 }}>正在取得定位中，請稍候...</div>;
+  }
+
+  return (
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <MapContainer
+        center={selectedPos || [25.033, 121.565]}
+        zoom={16}
+        style={{ flex: 1 }}
+      >
+        <ChangeView center={selectedPos} />
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <LocationSelector onSelect={setSelectedPos} />
+        {markers.map(m => (
+          <Marker key={m.id} position={m.position}>
+            <Popup>
+              <img src={m.photoURL} alt="拍點照片" style={{ width: '150px' }} />
+            </Popup>
+          </Marker>
+        ))}
+        {selectedPos && (
+          <Marker position={selectedPos}>
+            <Popup>選擇位置</Popup>
+          </Marker>
+        )}
+      </MapContainer>
+
+      <div style={{ padding: 10, background: '#eee' }}>
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={e => setPhotoFile(e.target.files[0])}
+        />
+        <button onClick={handleAddMarker} style={{ marginLeft: 10 }}>
+          新增拍點
+        </button>
+        {selectedPos && <div>選擇位置： {selectedPos.lat.toFixed(5)}, {selectedPos.lng.toFixed(5)}</div>}
+      </div>
+    </div>
+  );
+}
