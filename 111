@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+"homepage": ".",
 
 function LocationSelector({ onSelect }) {
   useMapEvents({
