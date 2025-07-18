@@ -62,7 +62,7 @@ function App() {
 
   return (
     <div>
-      <h2>TrashMap - 拍照舉報垃圾</h2>
+      <h2>TrashMap - 全民科學垃圾熱點回報</h2>
 
       <input
         type="file"
