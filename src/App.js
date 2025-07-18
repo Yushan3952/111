@@ -1,101 +1,89 @@
-import React, { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-import { db, storage } from "./firebase";
-import {
-  collection,
-  addDoc,
-  getDocs,
-  onSnapshot,
-  query,
-} from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+iimport React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
-const customIcon = new L.Icon({
-  iconUrl: "https://cdn-icons-png.flaticon.com/512/854/854878.png",
-  iconSize: [32, 32],
-  iconAnchor: [16, 32],
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, onSnapshot } from "firebase/firestore";
+
+// Firebase config (請換成你自己的)
+const firebaseConfig = {
+  apiKey: "AIzaSyAeX-tc-Rlr08KU8tPYZ4QcXDFdAx3LYHI",
+  authDomain: "trashmap-d648e.firebaseapp.com",
+  projectId: "trashmap-d648e",
+  storageBucket: "trashmap-d648e.appspot.com",
+  messagingSenderId: "527164483024",
+  appId: "1:527164483024:web:a40043feb0e05672c085d5",
+  measurementId: "G-MFJDX8XJML"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+delete L.Icon.Default.prototype._getIconUrl; // 重置 Leaflet icon
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon-2x.png',
+  iconUrl:
+    'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png',
+  shadowUrl:
+    'https://unpkg.com/leaflet@1.9.3/dist/images/marker-shadow.png',
 });
 
+function LocationMarker() {
+  const [position, setPosition] = useState(null);
+  const map = useMapEvents({
+    click(e) {
+      setPosition(e.latlng);
+      // 新增標記到 Firestore
+      addDoc(collection(db, "markers"), {
+        lat: e.latlng.lat,
+        lng: e.latlng.lng,
+        timestamp: Date.now(),
+      });
+    },
+  });
+
+  return position === null ? null : (
+    <Marker position={position}>
+      <Popup>新增垃圾熱點</Popup>
+    </Marker>
+  );
+}
+
 function App() {
-  const [image, setImage] = useState(null);
-  const [location, setLocation] = useState(null);
   const [markers, setMarkers] = useState([]);
 
   useEffect(() => {
-    // 取得使用者目前位置（可選）
-    navigator.geolocation.getCurrentPosition((pos) => {
-      setLocation([pos.coords.latitude, pos.coords.longitude]);
+    const unsub = onSnapshot(collection(db, "markers"), (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setMarkers(data);
     });
-
-    // 即時監聽 Firestore 中的照片標記
-    const q = query(collection(db, "photos"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const newMarkers = snapshot.docs.map((doc) => doc.data());
-      setMarkers(newMarkers);
-    });
-
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
-  const handleUpload = async () => {
-    if (!image || !location) {
-      alert("請選擇圖片並允許定位");
-      return;
-    }
-
-    const imageRef = ref(storage, `photos/${Date.now()}.jpg`);
-    await uploadBytes(imageRef, image);
-    const url = await getDownloadURL(imageRef);
-
-    await addDoc(collection(db, "photos"), {
-      lat: location[0],
-      lng: location[1],
-      url,
-      timestamp: Date.now(),
-    });
-
-    setImage(null);
-    alert("上傳成功！");
-  };
-
   return (
-    <div>
-      <h2>TrashMap - 全民科學垃圾熱點回報</h2>
-
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => setImage(e.target.files[0])}
-      />
-      <button onClick={handleUpload}>上傳照片</button>
-
+    <div style={{ height: '100vh' }}>
+      <h1 style={{ textAlign: 'center' }}>全民科學垃圾熱點回報</h1>
       <MapContainer
-        center={[23.7, 120.4]} // 雲林中心位置
+        center={[23.7, 120.4]} // 雲林縣中心點（含濁水溪、北港溪附近）
         zoom={10}
-        style={{ height: "500px", width: "100%", marginTop: "20px" }}
+        style={{ height: '90%', width: '100%' }}
       >
         <TileLayer
+          attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="© OpenStreetMap"
         />
-        {markers.map((marker, index) => (
-          <Marker
-            key={index}
-            position={[marker.lat, marker.lng]}
-            icon={customIcon}
-          >
-            <Popup>
-              <img
-                src={marker.url}
-                alt="uploaded"
-                style={{ width: "150px" }}
-              />
-            </Popup>
+        {markers.map(marker => (
+          <Marker key={marker.id} position={[marker.lat, marker.lng]}>
+            <Popup>垃圾熱點回報於 {new Date(marker.timestamp).toLocaleString()}</Popup>
           </Marker>
         ))}
+        <LocationMarker />
       </MapContainer>
+      <p style={{ textAlign: 'center' }}>
+        點擊地圖新增垃圾熱點（無需登入）
+      </p>
     </div>
   );
 }
