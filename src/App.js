@@ -1,92 +1,101 @@
-// src/App.js
-import React, { useState, useEffect } from "react";
-import { storage } from "./firebase";
+import React, { useEffect, useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import { db, storage } from "./firebase";
 import {
-  getDownloadURL,
-  listAll,
-  ref,
-  uploadBytes,
-} from "firebase/storage";
+  collection,
+  addDoc,
+  getDocs,
+  onSnapshot,
+  query,
+} from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
+const customIcon = new L.Icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/854/854878.png",
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+});
 
 function App() {
+  const [image, setImage] = useState(null);
+  const [location, setLocation] = useState(null);
   const [markers, setMarkers] = useState([]);
-  const [map, setMap] = useState(null);
 
   useEffect(() => {
-    if (window.google) {
-      const mapInstance = new window.google.maps.Map(
-        document.getElementById("map"),
-        {
-          center: { lat: 23.709, lng: 120.38 }, // 雲林縣中心
-          zoom: 10,
-        }
-      );
+    // 取得使用者目前位置（可選）
+    navigator.geolocation.getCurrentPosition((pos) => {
+      setLocation([pos.coords.latitude, pos.coords.longitude]);
+    });
 
-      mapInstance.addListener("click", (e) => {
-        handleMapClick(e.latLng);
-      });
+    // 即時監聽 Firestore 中的照片標記
+    const q = query(collection(db, "photos"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const newMarkers = snapshot.docs.map((doc) => doc.data());
+      setMarkers(newMarkers);
+    });
 
-      setMap(mapInstance);
-    }
+    return () => unsubscribe();
   }, []);
 
-  const handleMapClick = async (latLng) => {
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = "image/*";
-    fileInput.click();
-
-    fileInput.onchange = async () => {
-      const file = fileInput.files[0];
-      if (file) {
-        const filename = `${Date.now()}-${file.name}`;
-        const storageRef = ref(storage, `images/${filename}`);
-        await uploadBytes(storageRef, file);
-        const url = await getDownloadURL(storageRef);
-        addMarker(latLng, url);
-      }
-    };
-  };
-
-  const addMarker = (latLng, imageUrl) => {
-    const marker = new window.google.maps.Marker({
-      position: latLng,
-      map: map,
-    });
-
-    const infoWindow = new window.google.maps.InfoWindow({
-      content: `<img src="${imageUrl}" style="max-width: 200px;" />`,
-    });
-
-    marker.addListener("click", () => {
-      infoWindow.open(map, marker);
-    });
-
-    setMarkers((prev) => [...prev, { position: latLng, imageUrl }]);
-  };
-
-  useEffect(() => {
-    // 顯示所有圖片（這裡簡單示意，實際應該存一份 geo 資訊在 DB）
-    const fetchImages = async () => {
-      const folderRef = ref(storage, "images/");
-      const result = await listAll(folderRef);
-      result.items.forEach(async (itemRef) => {
-        const url = await getDownloadURL(itemRef);
-        // 模擬在雲林附近顯示（實際可連 Firebase Firestore 存緯經度）
-        const lat = 23.7 + Math.random() * 0.2;
-        const lng = 120.3 + Math.random() * 0.2;
-        addMarker({ lat, lng }, url);
-      });
-    };
-
-    if (map) {
-      fetchImages();
+  const handleUpload = async () => {
+    if (!image || !location) {
+      alert("請選擇圖片並允許定位");
+      return;
     }
-  }, [map]);
+
+    const imageRef = ref(storage, `photos/${Date.now()}.jpg`);
+    await uploadBytes(imageRef, image);
+    const url = await getDownloadURL(imageRef);
+
+    await addDoc(collection(db, "photos"), {
+      lat: location[0],
+      lng: location[1],
+      url,
+      timestamp: Date.now(),
+    });
+
+    setImage(null);
+    alert("上傳成功！");
+  };
 
   return (
-    <div style={{ height: "100vh", width: "100%" }}>
-      <div id="map" style={{ height: "100%" }}></div>
+    <div>
+      <h2>TrashMap - 拍照舉報垃圾</h2>
+
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => setImage(e.target.files[0])}
+      />
+      <button onClick={handleUpload}>上傳照片</button>
+
+      <MapContainer
+        center={[23.7, 120.4]} // 雲林中心位置
+        zoom={10}
+        style={{ height: "500px", width: "100%", marginTop: "20px" }}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="© OpenStreetMap"
+        />
+        {markers.map((marker, index) => (
+          <Marker
+            key={index}
+            position={[marker.lat, marker.lng]}
+            icon={customIcon}
+          >
+            <Popup>
+              <img
+                src={marker.url}
+                alt="uploaded"
+                style={{ width: "150px" }}
+              />
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
     </div>
   );
 }
