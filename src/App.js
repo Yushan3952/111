@@ -2,21 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import axios from 'axios';
-import 'leaflet/dist/leaflet.css';
 import imageCompression from 'browser-image-compression';
+import 'leaflet/dist/leaflet.css';
 
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
 
-// Leaflet 標記圖示修正
+// 修復 Leaflet 圖示錯誤
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-shadow.png',
+  iconRetinaUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-icon-2x.png',
+  iconUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-icon.png',
+  shadowUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-shadow.png',
 });
 
-// Firebase 設定
+// ✅ Firebase 設定（建議改成環境變數）
 const firebaseConfig = {
   apiKey: "AIzaSyDuqJXExGztRz1lKsfvPiZTjL2VN9v9_yo",
   authDomain: "trashmap-d648e.firebaseapp.com",
@@ -28,6 +31,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// 地圖點擊事件處理元件
 function LocationMarker({ setSelectedPosition }) {
   useMapEvents({
     click(e) {
@@ -70,18 +74,20 @@ export default function App() {
       alert('請先點擊地圖標記上傳位置');
       return;
     }
+
     setUploading(true);
     setUploadProgress(0);
+
     try {
       // 壓縮圖片
       const options = {
-        maxSizeMB: 0.5,
-        maxWidthOrHeight: 1024,
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
         useWebWorker: true,
       };
       const compressedFile = await imageCompression(file, options);
 
-      // 上傳到 Cloudinary
+      // 上傳至 Cloudinary
       const formData = new FormData();
       formData.append('file', compressedFile);
       formData.append('upload_preset', process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET);
@@ -91,14 +97,15 @@ export default function App() {
         formData,
         {
           onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round(
+            const percent = Math.round(
               (progressEvent.loaded * 100) / progressEvent.total
             );
-            setUploadProgress(percentCompleted);
-          }
+            setUploadProgress(percent);
+          },
         }
       );
 
+      // 寫入 Firestore
       const newImage = {
         url: res.data.secure_url,
         lat: selectedPosition.lat,
@@ -107,16 +114,17 @@ export default function App() {
         publicId: res.data.public_id,
       };
       await addDoc(collection(db, 'images'), newImage);
-      setImages(prev => [...prev, newImage]);
+      setImages((prev) => [...prev, newImage]);
+
       alert('上傳成功！');
       setFile(null);
       setSelectedPosition(null);
+      setUploadProgress(0);
     } catch (err) {
       console.error('上傳失敗:', err);
       alert('上傳失敗');
     } finally {
       setUploading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -124,7 +132,11 @@ export default function App() {
     <div style={{ padding: '10px' }}>
       <h1>全民科學垃圾熱點回報</h1>
 
-      <MapContainer center={[23.7, 120.4]} zoom={9} style={{ height: '500px', width: '100%' }}>
+      <MapContainer
+        center={[23.7, 120.4]}
+        zoom={9}
+        style={{ height: '500px', width: '100%' }}
+      >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="© OpenStreetMap contributors"
@@ -157,18 +169,15 @@ export default function App() {
         </button>
 
         {uploading && (
-          <div style={{ marginTop: '8px' }}>
-            <p>上傳進度：{uploadProgress}%</p>
-            <div style={{ width: '100%', background: '#eee' }}>
-              <div
-                style={{
-                  width: `${uploadProgress}%`,
-                  height: '10px',
-                  background: '#4caf50',
-                  transition: 'width 0.3s'
-                }}
-              />
-            </div>
+          <div style={{ width: '100%', backgroundColor: '#ccc', marginTop: '5px' }}>
+            <div
+              style={{
+                width: `${uploadProgress}%`,
+                height: '8px',
+                backgroundColor: 'green',
+                transition: 'width 0.2s',
+              }}
+            />
           </div>
         )}
 
@@ -177,3 +186,4 @@ export default function App() {
     </div>
   );
 }
+
