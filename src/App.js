@@ -4,6 +4,8 @@ import L from 'leaflet';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
 
+import imageCompression from 'browser-image-compression';
+
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
 
@@ -74,9 +76,17 @@ export default function App() {
     }
     setUploading(true);
     try {
-      // 上傳到 Cloudinary（請確保 VERCEL/VITE 環境變數設定正確）
+      // 壓縮圖片設定（可調整）
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1024,
+        useWebWorker: true
+      };
+      const compressedFile = await imageCompression(file, options);
+
+      // 上傳到 Cloudinary
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', compressedFile);
       formData.append('upload_preset', process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET);
 
       const res = await axios.post(
