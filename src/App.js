@@ -4,7 +4,10 @@ import L from 'leaflet';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
 
-// Fix default marker icon issues with React-Leaflet + Webpack
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
+
+// Fix leaflet marker icon issue
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -14,6 +17,18 @@ L.Icon.Default.mergeOptions({
   shadowUrl:
     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-shadow.png',
 });
+
+// Firebase config，請自行替換成你的環境變數或寫死
+const firebaseConfig = {
+  apiKey: "AIzaSyDuqJXExGztRz1lKsfvPiZTjL2VN9v9_yo",
+  authDomain: "trashmap-d648e.firebaseapp.com",
+  projectId: "trashmap-d648e",
+  storageBucket: "trashmap-d648e.appspot.com",
+  messagingSenderId: "1057540241087",
+  appId: "1:1057540241087:web:ca7a8f3870cfb9fcd5a6c4"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 function LocationMarker({ setSelectedPosition }) {
   useMapEvents({
@@ -30,17 +45,19 @@ export default function App() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
-  // Load saved images from localStorage (模擬資料庫，方便開發，部署時可換成 Firebase/DB)
+  // 從 Firestore 讀取所有圖片標記
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem('trashmap-images') || '[]');
-    setImages(saved);
+    const fetchImages = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, 'images'));
+        const docs = snapshot.docs.map(doc => doc.data());
+        setImages(docs);
+      } catch (err) {
+        console.error('讀取 Firestore 失敗:', err);
+      }
+    };
+    fetchImages();
   }, []);
-
-  // 儲存到 localStorage
-  const saveImages = (newImages) => {
-    localStorage.setItem('trashmap-images', JSON.stringify(newImages));
-    setImages(newImages);
-  };
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -57,7 +74,7 @@ export default function App() {
     }
     setUploading(true);
     try {
-      // 上傳 Cloudinary
+      // 上傳到 Cloudinary（請確保 VERCEL/VITE 環境變數設定正確）
       const formData = new FormData();
       formData.append('file', file);
       formData.append('upload_preset', process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET);
@@ -67,22 +84,24 @@ export default function App() {
         formData
       );
 
-      // 新增圖片標記
+      // 將圖片資料寫入 Firestore
       const newImage = {
         url: res.data.secure_url,
         lat: selectedPosition.lat,
         lng: selectedPosition.lng,
         timestamp: new Date().toISOString(),
+        publicId: res.data.public_id,
       };
+      await addDoc(collection(db, 'images'), newImage);
 
-      const newImages = [...images, newImage];
-      saveImages(newImages);
+      // 更新本地狀態顯示最新標記
+      setImages((prev) => [...prev, newImage]);
 
       alert('上傳成功！');
       setFile(null);
       setSelectedPosition(null);
     } catch (err) {
-      console.error(err);
+      console.error('上傳失敗:', err);
       alert('上傳失敗');
     } finally {
       setUploading(false);
