@@ -3,24 +3,20 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaf
 import L from 'leaflet';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
-
 import imageCompression from 'browser-image-compression';
 
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
 
-// Fix leaflet marker icon issue
+// Leaflet 標記圖示修正
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-icon-2x.png',
-  iconUrl:
-    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-icon.png',
-  shadowUrl:
-    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-shadow.png',
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-shadow.png',
 });
 
-// Firebase config，請自行替換成你的環境變數或寫死
+// Firebase 設定
 const firebaseConfig = {
   apiKey: "AIzaSyDuqJXExGztRz1lKsfvPiZTjL2VN9v9_yo",
   authDomain: "trashmap-d648e.firebaseapp.com",
@@ -42,12 +38,12 @@ function LocationMarker({ setSelectedPosition }) {
 }
 
 export default function App() {
-  const [images, setImages] = useState([]); // {url, lat, lng, timestamp}
+  const [images, setImages] = useState([]);
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
-  // 從 Firestore 讀取所有圖片標記
   useEffect(() => {
     const fetchImages = async () => {
       try {
@@ -75,12 +71,13 @@ export default function App() {
       return;
     }
     setUploading(true);
+    setUploadProgress(0);
     try {
-      // 壓縮圖片設定（可調整）
+      // 壓縮圖片
       const options = {
-        maxSizeMB: 1,
+        maxSizeMB: 0.5,
         maxWidthOrHeight: 1024,
-        useWebWorker: true
+        useWebWorker: true,
       };
       const compressedFile = await imageCompression(file, options);
 
@@ -91,10 +88,17 @@ export default function App() {
 
       const res = await axios.post(
         `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/upload`,
-        formData
+        formData,
+        {
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setUploadProgress(percentCompleted);
+          }
+        }
       );
 
-      // 將圖片資料寫入 Firestore
       const newImage = {
         url: res.data.secure_url,
         lat: selectedPosition.lat,
@@ -103,10 +107,7 @@ export default function App() {
         publicId: res.data.public_id,
       };
       await addDoc(collection(db, 'images'), newImage);
-
-      // 更新本地狀態顯示最新標記
-      setImages((prev) => [...prev, newImage]);
-
+      setImages(prev => [...prev, newImage]);
       alert('上傳成功！');
       setFile(null);
       setSelectedPosition(null);
@@ -115,6 +116,7 @@ export default function App() {
       alert('上傳失敗');
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -122,11 +124,7 @@ export default function App() {
     <div style={{ padding: '10px' }}>
       <h1>全民科學垃圾熱點回報</h1>
 
-      <MapContainer
-        center={[23.7, 120.4]} // 雲林中心
-        zoom={9}
-        style={{ height: '500px', width: '100%' }}
-      >
+      <MapContainer center={[23.7, 120.4]} zoom={9} style={{ height: '500px', width: '100%' }}>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="© OpenStreetMap contributors"
@@ -157,6 +155,23 @@ export default function App() {
         <button onClick={handleUpload} disabled={uploading}>
           {uploading ? '上傳中...' : '上傳垃圾照片'}
         </button>
+
+        {uploading && (
+          <div style={{ marginTop: '8px' }}>
+            <p>上傳進度：{uploadProgress}%</p>
+            <div style={{ width: '100%', background: '#eee' }}>
+              <div
+                style={{
+                  width: `${uploadProgress}%`,
+                  height: '10px',
+                  background: '#4caf50',
+                  transition: 'width 0.3s'
+                }}
+              />
+            </div>
+          </div>
+        )}
+
         <p>請先點擊地圖標記上傳位置，再選擇圖片並點擊上傳</p>
       </div>
     </div>
