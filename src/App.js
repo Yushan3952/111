@@ -7,15 +7,18 @@ import 'leaflet/dist/leaflet.css';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
 
-// Leaflet icon 修正
+// Leaflet 修正圖示問題
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-shadow.png',
+  iconRetinaUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-icon-2x.png',
+  iconUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-icon.png',
+  shadowUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-shadow.png',
 });
 
-// ✅ Firebase 設定
+// Firebase 設定（請勿修改）
 const firebaseConfig = {
   apiKey: "AIzaSyDuqJXExGztRz1lKsfvPiZTjL2VN9v9_yo",
   authDomain: "trashmap-d648e.firebaseapp.com",
@@ -27,7 +30,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 點選地圖標記位置
+// 讓使用者點地圖取座標
 function LocationMarker({ setSelectedPosition }) {
   useMapEvents({
     click(e) {
@@ -42,8 +45,9 @@ export default function App() {
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [progress, setProgress] = useState(0);
 
+  // 初次載入時從 Firebase 取得全部圖片
   useEffect(() => {
     const fetchImages = async () => {
       try {
@@ -67,43 +71,34 @@ export default function App() {
       return;
     }
     if (!selectedPosition) {
-      alert('請先點擊地圖標記上傳位置');
+      alert('請先點擊地圖選擇位置');
       return;
     }
-
     setUploading(true);
-    setUploadProgress(0);
+    setProgress(0);
 
     try {
-      // ✅ 壓縮圖片（使用瀏覽器端 imageCompression）
-      const options = {
-        maxSizeMB: 1,
-        maxWidthOrHeight: 1200,
-        useWebWorker: true,
-      };
+      // 圖片壓縮
+      const options = { maxSizeMB: 1, maxWidthOrHeight: 1200, useWebWorker: true };
       const compressedFile = await window.imageCompression(file, options);
 
-      // ✅ 上傳到 Cloudinary
       const formData = new FormData();
       formData.append('file', compressedFile);
       formData.append('upload_preset', process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET);
 
+      // 上傳到 Cloudinary
+      const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
       const res = await axios.post(
-        `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/upload`,
+        `https://api.cloudinary.com/v1_1/${cloudName}/upload`,
         formData,
         {
           onUploadProgress: (progressEvent) => {
             const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setUploadProgress(percent);
-          },
+            setProgress(percent);
+          }
         }
       );
 
-      if (!res.data || !res.data.secure_url) {
-        throw new Error('Cloudinary 回傳失敗');
-      }
-
-      // ✅ 寫入 Firestore
       const newImage = {
         url: res.data.secure_url,
         lat: selectedPosition.lat,
@@ -112,17 +107,17 @@ export default function App() {
         publicId: res.data.public_id,
       };
       await addDoc(collection(db, 'images'), newImage);
-
       setImages((prev) => [...prev, newImage]);
+
       alert('上傳成功！');
       setFile(null);
       setSelectedPosition(null);
+      setProgress(0);
     } catch (err) {
-      console.error('上傳流程失敗：', err);
-      alert('圖片上傳失敗，請稍後再試');
+      console.error('上傳失敗:', err);
+      alert('圖片上傳失敗：' + (err?.response?.data?.error?.message || err.message));
     } finally {
       setUploading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -140,6 +135,7 @@ export default function App() {
           attribution="© OpenStreetMap contributors"
         />
         <LocationMarker setSelectedPosition={setSelectedPosition} />
+
         {images.map((img, idx) => (
           <Marker key={idx} position={[img.lat, img.lng]}>
             <Popup>
@@ -151,9 +147,10 @@ export default function App() {
             </Popup>
           </Marker>
         ))}
+
         {selectedPosition && (
           <Marker position={[selectedPosition.lat, selectedPosition.lng]}>
-            <Popup>上傳位置</Popup>
+            <Popup>你選擇的位置</Popup>
           </Marker>
         )}
       </MapContainer>
@@ -165,11 +162,29 @@ export default function App() {
         </button>
         {uploading && (
           <div style={{ marginTop: '10px' }}>
-            <progress value={uploadProgress} max="100" style={{ width: '100%' }} />
-            <p>{uploadProgress}%</p>
+            <div
+              style={{
+                width: '100%',
+                backgroundColor: '#ccc',
+                borderRadius: '4px',
+                height: '10px',
+                marginBottom: '5px'
+              }}
+            >
+              <div
+                style={{
+                  width: `${progress}%`,
+                  backgroundColor: '#4caf50',
+                  height: '100%',
+                  borderRadius: '4px',
+                  transition: 'width 0.3s'
+                }}
+              />
+            </div>
+            <div style={{ fontSize: '12px' }}>{progress}%</div>
           </div>
         )}
-        <p>請先點擊地圖標記上傳位置，再選擇圖片並點擊上傳</p>
+        <p>請先點擊地圖標記位置，再選擇照片上傳</p>
       </div>
     </div>
   );
