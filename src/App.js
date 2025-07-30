@@ -7,7 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
 
-// Leaflet 修正圖示問題
+// Leaflet 圖示修正
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -18,7 +18,7 @@ L.Icon.Default.mergeOptions({
     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/images/marker-shadow.png',
 });
 
-// Firebase 設定（請勿修改）
+// Firebase 設定
 const firebaseConfig = {
   apiKey: "AIzaSyDuqJXExGztRz1lKsfvPiZTjL2VN9v9_yo",
   authDomain: "trashmap-d648e.firebaseapp.com",
@@ -30,7 +30,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 讓使用者點地圖取座標
+// 地圖點擊功能：記錄座標
 function LocationMarker({ setSelectedPosition }) {
   useMapEvents({
     click(e) {
@@ -47,7 +47,7 @@ export default function App() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  // 初次載入時從 Firebase 取得全部圖片
+  // 載入已上傳圖片
   useEffect(() => {
     const fetchImages = async () => {
       try {
@@ -74,6 +74,7 @@ export default function App() {
       alert('請先點擊地圖選擇位置');
       return;
     }
+
     setUploading(true);
     setProgress(0);
 
@@ -86,10 +87,10 @@ export default function App() {
       formData.append('file', compressedFile);
       formData.append('upload_preset', process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET);
 
-      // 上傳到 Cloudinary
+      // ✅ 注意：修正 Cloudinary 上傳路徑
       const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
       const res = await axios.post(
-        `https://api.cloudinary.com/v1_1/${cloudName}/upload`,
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
         formData,
         {
           onUploadProgress: (progressEvent) => {
@@ -99,6 +100,7 @@ export default function App() {
         }
       );
 
+      // 新增圖片資訊到 Firebase Firestore
       const newImage = {
         url: res.data.secure_url,
         lat: selectedPosition.lat,
@@ -125,11 +127,7 @@ export default function App() {
     <div style={{ padding: '10px' }}>
       <h1>全民科學垃圾熱點回報</h1>
 
-      <MapContainer
-        center={[23.7, 120.4]}
-        zoom={9}
-        style={{ height: '500px', width: '100%' }}
-      >
+      <MapContainer center={[23.7, 120.4]} zoom={9} style={{ height: '500px', width: '100%' }}>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="© OpenStreetMap contributors"
@@ -160,26 +158,17 @@ export default function App() {
         <button onClick={handleUpload} disabled={uploading}>
           {uploading ? '上傳中...' : '上傳垃圾照片'}
         </button>
+
         {uploading && (
           <div style={{ marginTop: '10px' }}>
-            <div
-              style={{
-                width: '100%',
-                backgroundColor: '#ccc',
+            <div style={{ width: '100%', backgroundColor: '#ccc', borderRadius: '4px', height: '10px' }}>
+              <div style={{
+                width: `${progress}%`,
+                backgroundColor: '#4caf50',
+                height: '100%',
                 borderRadius: '4px',
-                height: '10px',
-                marginBottom: '5px'
-              }}
-            >
-              <div
-                style={{
-                  width: `${progress}%`,
-                  backgroundColor: '#4caf50',
-                  height: '100%',
-                  borderRadius: '4px',
-                  transition: 'width 0.3s'
-                }}
-              />
+                transition: 'width 0.3s'
+              }} />
             </div>
             <div style={{ fontSize: '12px' }}>{progress}%</div>
           </div>
