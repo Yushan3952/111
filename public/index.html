@@ -1,18 +1,37 @@
+
 <!DOCTYPE html>
 <html lang="zh-Hant">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="TrashMap 全民科學垃圾回報地圖" />
     <title>全民科學垃圾回報地圖</title>
-    
-    <!-- 引入 image compression 套件 -->
-    <script src="https://unpkg.com/browser-image-compression@latest/dist/browser-image-compression.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f9f9f9;
+      }
+      h1 {
+        text-align: center;
+        color: #333;
+      }
+      button {
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #c0392b;
+      }
+    </style>
   </head>
   <body>
-    <noscript>請啟用 JavaScript 以使用本網站。</noscript>
     <div id="root"></div>
-    <a href="https://forms.gle/8Vj3jRXdz4f5DyVw8">意見回饋</a>
+    <script type="module" src="/src/main.jsx"></script>
+     <a href="https://forms.gle/8Vj3jRXdz4f5DyVw8">意見回饋</a>
   </body>
 </html>
