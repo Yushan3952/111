@@ -1,4 +1,3 @@
-// src/App.js
 import React, { useEffect, useState } from "react";
 import { db } from "./firebase";
 import { collection, getDocs } from "firebase/firestore";
@@ -10,61 +9,50 @@ export default function App() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 從 Firestore 讀取資料並解析 EXIF
+  // 讀取 Firestore 資料並讀取 EXIF
   useEffect(() => {
     const fetchImages = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "images"));
-        const data = await Promise.all(
-          querySnapshot.docs.map(async (docSnap) => {
-            const item = { id: docSnap.id, ...docSnap.data() };
-            try {
-              const res = await fetch(item.url);
-              const blob = await res.blob();
-              const exifData = await exifr.parse(blob, [
-                "DateTimeOriginal",
-                "latitude",
-                "longitude",
-              ]);
-              if (exifData) {
-                item.takenTime = exifData.DateTimeOriginal
-                  ? new Date(exifData.DateTimeOriginal).toLocaleString()
-                  : "無資料";
-                item.lat = exifData.latitude || null;
-                item.lng = exifData.longitude || null;
-              }
-            } catch (err) {
-              console.error("讀取 EXIF 失敗", err);
+      const querySnapshot = await getDocs(collection(db, "images"));
+      const data = await Promise.all(
+        querySnapshot.docs.map(async (d) => {
+          const item = { id: d.id, ...d.data() };
+          try {
+            const res = await fetch(item.url);
+            const blob = await res.blob();
+            const exifData = await exifr.parse(blob, ["DateTimeOriginal", "latitude", "longitude"]);
+            if (exifData) {
+              item.takenTime = exifData.DateTimeOriginal
+                ? new Date(exifData.DateTimeOriginal).toLocaleString()
+                : "無資料";
+              item.lat = exifData.latitude || null;
+              item.lng = exifData.longitude || null;
             }
-            return item;
-          })
-        );
-        setImages(data);
-      } catch (error) {
-        console.error("讀取 Firestore 失敗", error);
-      } finally {
-        setLoading(false);
-      }
+          } catch (err) {
+            console.error("讀取 EXIF 失敗", err);
+          }
+          return item;
+        })
+      );
+      setImages(data);
+      setLoading(false);
     };
 
     fetchImages();
   }, []);
 
-  // 初始化 Leaflet 地圖與標記
+  // Leaflet 地圖標記
   useEffect(() => {
-    if (!loading && images.length > 0) {
+    if (!loading) {
       const map = L.map("map").setView([23.7, 120.5], 10);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap contributors",
+        attribution: "© OpenStreetMap contributors"
       }).addTo(map);
 
       images.forEach((img) => {
         if (img.lat && img.lng) {
           L.marker([img.lat, img.lng])
             .addTo(map)
-            .bindPopup(
-              `<img src="${img.url}" width="100"><br>${img.takenTime || ""}`
-            );
+            .bindPopup(`<img src="${img.url}" width="100"><br>${img.takenTime || ""}`);
         }
       });
     }
@@ -72,7 +60,7 @@ export default function App() {
 
   return (
     <div>
-      <h1>全民科學垃圾回報地圖</h1>
+      <h1>TrashMap 照片展示</h1>
       <div id="map" style={{ height: "400px", marginBottom: "20px" }}></div>
       {loading ? (
         <p>載入中...</p>
@@ -92,6 +80,4 @@ export default function App() {
       )}
     </div>
   );
-}
-
 }
