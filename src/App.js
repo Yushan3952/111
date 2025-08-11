@@ -1,68 +1,43 @@
-// App.js
+// src/App.js
 import React, { useEffect, useState } from "react";
-import { initializeApp } from "firebase/app";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
-import exifr from "exifr";
+import { getFirestore, collection, getDocs, deleteDoc, doc } from "firebase/firestore";
+import app from "./firebase"; // 引入剛剛的 Firebase 初始化
+import "./App.css";
 
-// ✅ Firebase 設定（已替換成你的）
-const firebaseConfig = {
-  apiKey: "AIzaSyBz-BR5fzHDkK_YcUHgIYy3DfeNUuaUDn4",
-  authDomain: "trashmap-d648e.firebaseapp.com",
-  projectId: "trashmap-d648e",
-  storageBucket: "trashmap-d648e.appspot.com",
-  messagingSenderId: "20749402893",
-  appId: "1:20749402893:web:281a1c7b431b06c4fcfb86",
-};
-
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-export default function App() {
+const PASSWORD = "winnie3952";
+
+function App() {
   const [images, setImages] = useState([]);
+  const [password, setPassword] = useState("");
+  const [authorized, setAuthorized] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const fetchImages = async () => {
+    try {
+      setLoading(true);
+      const colRef = collection(db, "images");
+      const snapshot = await getDocs(colRef);
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setImages(list);
+    } catch (error) {
+      console.error("讀取失敗：", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchImages = async () => {
-      const querySnapshot = await getDocs(collection(db, "images"));
-      const imgData = [];
-
-      for (const docSnap of querySnapshot.docs) {
-        const data = docSnap.data();
-        let meta = {};
-
-        try {
-          const response = await fetch(data.url);
-          const blob = await response.blob();
-          meta = await exifr.parse(blob, ["CreateDate", "latitude", "longitude"]);
-        } catch (err) {
-          console.error("❌ 無法讀取 EXIF：", err);
-        }
-
-        imgData.push({
-          id: docSnap.id,
-          url: data.url,
-          public_id: data.public_id,
-          takenAt: meta?.CreateDate
-            ? new Date(meta.CreateDate).toLocaleString()
-            : "未知",
-          location: meta?.latitude
-            ? `${meta.latitude.toFixed(6)}, ${meta.longitude.toFixed(6)}`
-            : "未知",
-        });
-      }
-      setImages(imgData);
-    };
-
-    fetchImages();
-  }, []);
+    if (authorized) {
+      fetchImages();
+    }
+  }, [authorized]);
 
   const handleDelete = async (id, public_id) => {
-    console.log("🧪 準備刪除圖片：", { id, public_id });
+    if (!window.confirm("確定要刪除這筆資料嗎？")) return;
+
     try {
       const res = await fetch("https://222-nu-one.vercel.app/delete-image", {
         method: "POST",
@@ -70,29 +45,97 @@ export default function App() {
         body: JSON.stringify({ public_id }),
       });
 
-      const result = await res.json();
-      console.log("✅ Cloudinary 回應：", result);
-
-      if (result.error) throw new Error(result.error);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "刪除圖片失敗");
 
       await deleteDoc(doc(db, "images", id));
-      setImages(images.filter((img) => img.id !== id));
-    } catch (err) {
-      console.error("❌ 刪除失敗：", err.message);
+      alert("刪除成功");
+      fetchImages();
+    } catch (error) {
+      alert("刪除失敗：" + error.message);
     }
   };
 
-  return (
-    <div>
-      <h1>TrashMap 圖片管理</h1>
-      {images.map((img) => (
-        <div key={img.id} style={{ marginBottom: "20px" }}>
-          <img src={img.url} alt="uploaded" width="300" />
-          <p>📅 拍攝時間：{img.takenAt}</p>
-          <p>📍 拍攝位置：{img.location}</p>
-          <button onClick={() => handleDelete(img.id, img.public_id)}>刪除</button>
+  if (!authorized) {
+    return (
+      <div style={{ maxWidth: 400, margin: "100px auto", textAlign: "center" }}>
+        <h2>請輸入密碼</h2>
+        <input
+          type={showPassword ? "text" : "password"}
+          placeholder="輸入密碼"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{ padding: 10, width: "80%" }}
+        />
+        <div style={{ marginTop: 10 }}>
+          <label>
+            <input
+              type="checkbox"
+              checked={showPassword}
+              onChange={() => setShowPassword(!showPassword)}
+            />{" "}
+            顯示密碼
+          </label>
         </div>
-      ))}
+        <button
+          style={{ marginTop: 20, padding: "8px 20px" }}
+          onClick={() => {
+            if (password === PASSWORD) setAuthorized(true);
+            else alert("密碼錯誤");
+          }}
+        >
+          登入
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ maxWidth: 800, margin: "auto", padding: 20 }}>
+      <h1>TrashMap 管理後台</h1>
+      {loading && <p>讀取中...</p>}
+      {!loading && images.length === 0 && <p>目前沒有任何資料</p>}
+
+      {!loading && images.length > 0 && (
+        <table border="1" cellPadding="10" style={{ width: "100%" }}>
+          <thead>
+            <tr>
+              <th>圖片</th>
+              <th>上傳時間</th>
+              <th>上傳位置</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {images.map((item) => (
+              <tr key={item.id}>
+                <td>
+                  <img
+                    src={item.url}
+                    alt="垃圾照片"
+                    style={{ width: 120, height: 80, objectFit: "cover" }}
+                  />
+                </td>
+                <td>
+                  {item.timestamp
+                    ? new Date(item.timestamp).toLocaleString()
+                    : "無資料"}
+                </td>
+                <td>
+                  {item.lat?.toFixed(5)}, {item.lng?.toFixed(5)}
+                </td>
+                <td>
+                  <button onClick={() => handleDelete(item.id, item.publicId)}>
+                    刪除
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
+
+export default App;
