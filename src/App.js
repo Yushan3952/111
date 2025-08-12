@@ -245,20 +245,3 @@ export default function App() {
       </div>
 
       <section>
-        <h3>最新上傳</h3>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          {photos.length === 0 && <div>目前沒有照片</div>}
-          {photos.map((p) => (
-            <div key={p.imageUrl} style={{ width: 260, border: "1px solid #ddd", padding: 8, borderRadius: 6, background: "#fff" }}>
-              <img src={p.imageUrl} alt="img" style={{ width: "100%", height: 150, objectFit: "cover", borderRadius: 4 }} />
-              <div style={{ marginTop: 6 }}>
-                <div><strong>時間：</strong>{p.takenTime ? new Date(p.takenTime).toLocaleString() : "無"}</div>
-                <div><strong>位置：</strong>{p.lat && p.lng ? `${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}` : "無"}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-    </div>
-  );
-}
