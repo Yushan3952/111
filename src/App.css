@@ -1,0 +1,80 @@
+/* 全域設定 */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+}
+
+/* 頁面容器 */
+.App {
+  text-align: center;
+  padding: 10px;
+}
+
+/* 按鈕樣式 */
+button {
+  background-color: #4cafef;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  margin: 5px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+button:hover {
+  background-color: #3b99d4;
+}
+
+/* 地圖容器 */
+.map-container {
+  height: 400px;
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* 圖片上傳區 */
+.upload-container {
+  background-color: white;
+  padding: 15px;
+  margin-top: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+input[type="file"] {
+  margin: 10px 0;
+}
+
+/* 圖片列表 */
+.image-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.image-item {
+  margin: 5px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  overflow: hidden;
+  background-color: white;
+}
+
+.image-item img {
+  display: block;
+  max-width: 200px;
+  height: auto;
+}
+
+/* 圖片資訊 */
+.image-info {
+  font-size: 12px;
+  padding: 5px;
+  background-color: #fafafa;
+  border-top: 1px solid #eee;
+}
