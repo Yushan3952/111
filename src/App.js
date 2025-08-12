@@ -192,7 +192,7 @@ export default function App() {
   return (
     <div className="container">
       <header>
-        <h1>TrashMap — 民眾回報（自動從照片讀取位置/時間）</h1>
+        <h1>全民科學垃圾回報系統</h1>
       </header>
 
       <div style={{ marginBottom: 12 }}>
