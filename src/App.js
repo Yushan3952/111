@@ -243,4 +243,5 @@ export default function App() {
           {manualLatLng && <Marker position={[manualLatLng.lat, manualLatLng.lng]} />}
         </MapContainer>
       </div>
-
+  );
+}
