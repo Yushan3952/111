@@ -1,83 +1,113 @@
-import React, { useEffect, useState } from "react";
-import { db } from "./firebase";
-import { collection, getDocs } from "firebase/firestore";
-import exifr from "exifr";
+// src/App.js
+import React, { useState, useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import exifr from "exifr";
+import { db } from "./firebase";
+import { collection, addDoc, getDocs } from "firebase/firestore";
 
-export default function App() {
-  const [images, setImages] = useState([]);
-  const [loading, setLoading] = useState(true);
+const App = () => {
+  const [file, setFile] = useState(null);
+  const [photos, setPhotos] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // 讀取 Firestore 資料並讀取 EXIF
+  // Leaflet Marker 修正圖示路徑
+  delete L.Icon.Default.prototype._getIconUrl;
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon-2x.png",
+    iconUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png",
+    shadowUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-shadow.png"
+  });
+
+  // 讀取 Firestore 中的圖片資料
   useEffect(() => {
-    const fetchImages = async () => {
+    const fetchPhotos = async () => {
       const querySnapshot = await getDocs(collection(db, "images"));
-      const data = await Promise.all(
-        querySnapshot.docs.map(async (d) => {
-          const item = { id: d.id, ...d.data() };
-          try {
-            const res = await fetch(item.url);
-            const blob = await res.blob();
-            const exifData = await exifr.parse(blob, ["DateTimeOriginal", "latitude", "longitude"]);
-            if (exifData) {
-              item.takenTime = exifData.DateTimeOriginal
-                ? new Date(exifData.DateTimeOriginal).toLocaleString()
-                : "無資料";
-              item.lat = exifData.latitude || null;
-              item.lng = exifData.longitude || null;
-            }
-          } catch (err) {
-            console.error("讀取 EXIF 失敗", err);
-          }
-          return item;
-        })
-      );
-      setImages(data);
-      setLoading(false);
+      const list = [];
+      querySnapshot.forEach(doc => list.push(doc.data()));
+      setPhotos(list);
     };
-
-    fetchImages();
+    fetchPhotos();
   }, []);
 
-  // Leaflet 地圖標記
-  useEffect(() => {
-    if (!loading) {
-      const map = L.map("map").setView([23.7, 120.5], 10);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap contributors"
-      }).addTo(map);
-
-      images.forEach((img) => {
-        if (img.lat && img.lng) {
-          L.marker([img.lat, img.lng])
-            .addTo(map)
-            .bindPopup(`<img src="${img.url}" width="100"><br>${img.takenTime || ""}`);
-        }
-      });
+  // 上傳圖片到 Cloudinary 並存到 Firestore
+  const handleUpload = async () => {
+    if (!file) {
+      alert("請選擇一張照片");
+      return;
     }
-  }, [loading, images]);
+
+    setLoading(true);
+
+    try {
+      // 從 EXIF 讀取 GPS 與時間
+      const exifData = await exifr.parse(file, ["latitude", "longitude", "DateTimeOriginal"]);
+      if (!exifData?.latitude || !exifData?.longitude) {
+        alert("照片缺少 GPS 位置資訊");
+        setLoading(false);
+        return;
+      }
+
+      const lat = exifData.latitude;
+      const lng = exifData.longitude;
+      const dateTime = exifData.DateTimeOriginal ? exifData.DateTimeOriginal.toISOString() : null;
+
+      // 上傳到 Cloudinary
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "trashmap_unsigned");
+
+      const cloudinaryRes = await fetch(
+        "https://api.cloudinary.com/v1_1/dwhn02tn5/image/upload",
+        { method: "POST", body: formData }
+      );
+
+      const cloudinaryData = await cloudinaryRes.json();
+
+      // 儲存到 Firestore
+      await addDoc(collection(db, "images"), {
+        imageUrl: cloudinaryData.secure_url,
+        lat,
+        lng,
+        dateTime
+      });
+
+      alert("上傳成功！");
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+      alert("上傳失敗");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div>
-      <h1>TrashMap 照片展示</h1>
-      <div id="map" style={{ height: "400px", marginBottom: "20px" }}></div>
-      {loading ? (
-        <p>載入中...</p>
-      ) : (
-        images.map((img) => (
-          <div key={img.id} style={{ marginBottom: "20px" }}>
-            <img src={img.url} alt="" style={{ width: "200px" }} />
-            <p>拍攝時間：{img.takenTime || "無資料"}</p>
-            <p>
-              位置：
-              {img.lat && img.lng
-                ? `${img.lat.toFixed(6)}, ${img.lng.toFixed(6)}`
-                : "無資料"}
-            </p>
-          </div>
-        ))
-      )}
+      <h1>TrashMap 民眾端</h1>
+      <input type="file" accept="image/*" onChange={e => setFile(e.target.files[0])} />
+      <button onClick={handleUpload} disabled={loading}>
+        {loading ? "上傳中..." : "上傳"}
+      </button>
+
+      <MapContainer center={[23.7, 120.5]} zoom={10} style={{ height: "500px", marginTop: "20px" }}>
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="© OpenStreetMap 貢獻者"
+        />
+        {photos.map((p, idx) => (
+          <Marker key={idx} position={[p.lat, p.lng]}>
+            <Popup>
+              <img src={p.imageUrl} alt="Trash" style={{ width: "150px" }} /><br />
+              {p.dateTime ? new Date(p.dateTime).toLocaleString() : "無時間資訊"}
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
     </div>
   );
-}
+};
+
+export default App;
+
