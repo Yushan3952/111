@@ -1,13 +1,14 @@
+// src/firebase.js
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA0IH9BexS4RhRklbt9S_RFMgS37P5ewjo",
+  apiKey: "AIzaSyCe9Ly8XscGgYkN_dRHyTkjOkL6JH2OeV8",
   authDomain: "trashmap-d648e.firebaseapp.com",
   projectId: "trashmap-d648e",
   storageBucket: "trashmap-d648e.appspot.com",
-  messagingSenderId: "922843233736",
-  appId: "1:922843233736:web:2d8ab1ef2ed1db65d808bc"
+  messagingSenderId: "350494571080",
+  appId: "1:350494571080:web:208e91c0633e859899fac8"
 };
 
 const app = initializeApp(firebaseConfig);
