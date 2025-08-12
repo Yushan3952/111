@@ -238,10 +238,10 @@ export default function App() {
               </Marker>
             ) : null
           ))}
-
           {/* 如果使用者手動選過位置，顯示暫時標記 */}
           {manualLatLng && <Marker position={[manualLatLng.lat, manualLatLng.lng]} />}
         </MapContainer>
       </div>
+    </div>
   );
 }
