@@ -2,14 +2,21 @@
 <html lang="zh-Hant">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="description" content="TrashMap 民眾端" />
     <title>TrashMap 民眾端</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+    />
+    <style>
+      /* 簡單樣式 */
+      body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 0; }
+      #root { padding: 12px; }
+    </style>
   </head>
   <body>
-    <noscript>你需要啟用 JavaScript 才能運行此應用</noscript>
     <div id="root"></div>
+    <!-- Leaflet 的 JS（可有可無，react-leaflet 已包含大部分） -->
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   </body>
 </html>
