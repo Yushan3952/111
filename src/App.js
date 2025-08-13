@@ -192,13 +192,26 @@ const App = () => {
         >
           開始使用
         </button>
+
+        <div style={{ marginTop: "30px" }}>
+          <a
+            href="https://forms.gle/u9uHmAygxK5fRkmc7"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <button style={{ fontSize: "16px", padding: "8px 16px" }}>
+              回饋意見
+            </button>
+          </a>
+        </div>
       </div>
     );
   }
 
+  // 🔹 操作頁面
   return (
     <div>
-      <h2>全民科學垃圾回報系統</h2>
+      <h2>TrashMap 上傳</h2>
 
       <input type="file" accept="image/*" onChange={handleFileChange} />
 
@@ -215,6 +228,18 @@ const App = () => {
 
       {uploading && <p>上傳中...</p>}
       <button onClick={handleUpload} disabled={uploading}>上傳</button>
+
+      <div style={{ margin: "10px 0" }}>
+        <a
+          href="https://forms.gle/u9uHmAygxK5fRkmc7"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <button style={{ fontSize: "16px", padding: "6px 12px" }}>
+            回饋意見
+          </button>
+        </a>
+      </div>
 
       <MapContainer
         center={[23.7, 120.53]}
@@ -251,5 +276,3 @@ const App = () => {
 };
 
 export default App;
-
-
