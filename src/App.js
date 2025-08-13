@@ -198,7 +198,7 @@ const App = () => {
 
   return (
     <div>
-      <h2>TrashMap 上傳</h2>
+      <h2>全民科學垃圾回報系統</h2>
 
       <input type="file" accept="image/*" onChange={handleFileChange} />
 
