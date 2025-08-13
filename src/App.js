@@ -210,67 +210,81 @@ const App = () => {
 
   // 🔹 操作頁面
   return (
-    <div>
-      <h1>全民科學垃圾回報系統</h1>
+    <div style={{ padding: "20px" }}>
+      <div style={{ display: "flex", gap: "20px" }}>
+        {/* 左邊操作區 */}
+        <div style={{ flex: 1 }}>
+          <h1>全民科學垃圾回報系統</h1>
 
-      <input type="file" accept="image/*" onChange={handleFileChange} />
-  
-      <div>
-        <label>髒亂程度：</label>
-        <select value={trashLevel} onChange={(e) => setTrashLevel(Number(e.target.value))}>
-          <option value={1}>1 - 非常乾淨</option>
-          <option value={2}>2 - 輕微垃圾</option>
-          <option value={3}>3 - 中等垃圾</option>
-          <option value={4}>4 - 髒亂</option>
-          <option value={5}>5 - 非常髒亂</option>
-        </select>
-      </div>
+          <input type="file" accept="image/*" onChange={handleFileChange} />
+        
+          <div>
+            <label>髒亂程度：</label>
+            <select value={trashLevel} onChange={(e) => setTrashLevel(Number(e.target.value))}>
+              <option value={1}>1 - 非常乾淨</option>
+              <option value={2}>2 - 輕微垃圾</option>
+              <option value={3}>3 - 中等垃圾</option>
+              <option value={4}>4 - 髒亂</option>
+              <option value={5}>5 - 非常髒亂</option>
+            </select>
+          </div>
 
-      {uploading && <p>上傳中...</p>}
-      <button onClick={handleUpload} disabled={uploading}>上傳</button>
+          {uploading && <p>上傳中...</p>}
+          <button onClick={handleUpload} disabled={uploading}>上傳</button>
 
-      <div style={{ margin: "10px 0" }}>
-        <a
-          href="https://forms.gle/u9uHmAygxK5fRkmc7"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <button style={{ fontSize: "16px", padding: "6px 12px" }}>
-            回饋意見
-          </button>
-        </a>
-      </div>
+          <div style={{ margin: "10px 0" }}>
+            <a
+              href="https://forms.gle/u9uHmAygxK5fRkmc7"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <button style={{ fontSize: "16px", padding: "6px 12px" }}>
+                回饋意見
+              </button>
+            </a>
+          </div>
+        </div>
 
-      <MapContainer
-        center={[23.7, 120.53]}
-        zoom={10}
-        style={{ height: "500px", width: "100%" }}
-      >
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        <LocationSelector onSelect={(pos) => setManualLocation(pos)} />
+        {/* 右邊欄位：上方圖片 + 下方地圖 */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "10px" }}>
+          <img
+            src="https://drive.google.com/uc?export=view&id=1AvNsNNzpxe7tzEOYMqp_8GuOdNZXJDGE"
+            alt="示意圖"
+            style={{ width: "100%", borderRadius: "8px" }}
+          />
 
-        {markers.map((m, idx) => (
-          <Marker
-            key={idx}
-            position={[m.lat, m.lng]}
-            icon={getMarkerIcon(levelColors[m.level || 3])}
+          <MapContainer
+            center={[23.7, 120.53]}
+            zoom={10}
+            style={{ height: "500px", width: "100%" }}
           >
-            <Popup>
-              <img src={m.imageUrl} alt="uploaded" width="150" />
-              <br />
-              等級：{m.level || 3}
-              <br />
-              {m.timestamp}
-            </Popup>
-          </Marker>
-        ))}
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <LocationSelector onSelect={(pos) => setManualLocation(pos)} />
 
-        {manualLocation && (
-          <Marker position={manualLocation} icon={getMarkerIcon(levelColors[trashLevel])}>
-            <Popup>已選擇的位置（等級：{trashLevel}）</Popup>
-          </Marker>
-        )}
-      </MapContainer>
+            {markers.map((m, idx) => (
+              <Marker
+                key={idx}
+                position={[m.lat, m.lng]}
+                icon={getMarkerIcon(levelColors[m.level || 3])}
+              >
+                <Popup>
+                  <img src={m.imageUrl} alt="uploaded" width="150" />
+                  <br />
+                  等級：{m.level || 3}
+                  <br />
+                  {m.timestamp}
+                </Popup>
+              </Marker>
+            ))}
+
+            {manualLocation && (
+              <Marker position={manualLocation} icon={getMarkerIcon(levelColors[trashLevel])}>
+                <Popup>已選擇的位置（等級：{trashLevel}）</Popup>
+              </Marker>
+            )}
+          </MapContainer>
+        </div>
+      </div>
     </div>
   );
 };
