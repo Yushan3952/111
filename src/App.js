@@ -1,194 +1,149 @@
-import React, { useState, useEffect, useRef } from "react";
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "firebase/firestore";
-import exifr from "exifr";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+// src/App.js
+import React, { useEffect, useState, useRef } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import CameraCapture from "./CameraCapture";
-import "./App.css";
+import exifr from "exifr";
+import { db } from "./firebase";
+import { collection, addDoc, getDocs, serverTimestamp } from "firebase/firestore";
 
-// Firebase config 這邊換成你的
-const firebaseConfig = {
-  apiKey: "你的API_KEY",
-  authDomain: "你的_AUTH_DOMAIN",
-  projectId: "你的_PROJECT_ID",
-  storageBucket: "你的_STORAGE_BUCKET",
-  messagingSenderId: "你的_MSG_ID",
-  appId: "你的_APP_ID",
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// Leaflet icon 修正（webpack）
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon-2x.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon-2x.png",
   iconUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png",
   shadowUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-shadow.png",
 });
 
-export default function App() {
-  const [images, setImages] = useState([]);
-  const [showCamera, setShowCamera] = useState(false);
-  const [loading, setLoading] = useState(false);
+function ClickToSelect({ onSelect }) {
+  useMapEvents({ click(e) { onSelect(e.latlng); } });
+  return null;
+}
 
-  // 讀照片資料
+export default function App() {
+  const [file, setFile] = useState(null);
+  const [photos, setPhotos] = useState([]);
+  const [loadingUpload, setLoadingUpload] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [needManualPick, setNeedManualPick] = useState(false);
+  const [manualLatLng, setManualLatLng] = useState(null);
+  const mapRef = useRef();
+
   useEffect(() => {
-    fetchImages();
+    const load = async () => {
+      try {
+        const snap = await getDocs(collection(db, "images"));
+        setPhotos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      } catch (err) { console.error("讀取 Firestore 失敗:", err); }
+    };
+    load();
   }, []);
 
-  const fetchImages = async () => {
-    setLoading(true);
+  const geocodeAddress = async (address) => {
     try {
-      const q = query(collection(db, "images"), orderBy("timestamp", "desc"));
-      const snap = await getDocs(q);
-      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setImages(list);
-    } catch (err) {
-      console.error("Firestore 讀取失敗:", err);
-    } finally {
-      setLoading(false);
-    }
+      const q = encodeURIComponent(address);
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, 
+        { headers: { "User-Agent": "TrashMapApp/1.0" } });
+      if (!res.ok) return null;
+      const arr = await res.json();
+      if (arr.length) return { lat: parseFloat(arr[0].lat), lng: parseFloat(arr[0].lon) };
+      return null;
+    } catch (err) { console.error("geocode error", err); return null; }
   };
 
-  // 相簿上傳
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setLoading(true);
+  const handleUpload = async () => {
+    if (!file) { alert("請先選擇照片"); return; }
+    setLoadingUpload(true); setProgress(0);
 
     try {
-      const exifData = await exifr.parse(file);
-      const lat = exifData?.latitude ?? null;
-      const lng = exifData?.longitude ?? null;
-      const dateTaken = exifData?.DateTimeOriginal
-        ? exifData.DateTimeOriginal.toISOString()
-        : new Date().toISOString();
+      const exifData = await exifr.parse(file, ["DateTimeOriginal", "latitude", "longitude", "ImageDescription", "UserComment", "XPComment"]);
 
-      const url = await uploadToCloudinary(file);
+      let takenTime = exifData?.DateTimeOriginal ? new Date(exifData.DateTimeOriginal).toISOString() : null;
+      let lat = exifData?.latitude ?? null;
+      let lng = exifData?.longitude ?? null;
 
-      await addDoc(collection(db, "images"), {
-        url,
-        lat,
-        lng,
-        dateTaken,
-        timestamp: Date.now(),
-      });
-
-      await fetchImages();
-    } catch (err) {
-      console.error("上傳失敗", err);
-      alert("上傳失敗：" + (err.message || err));
-    } finally {
-      setLoading(false);
-      e.target.value = ""; // 清空 input，方便重複選同一張
-    }
-  };
-
-  // 即拍即傳用，帶入 file, lat, lng
-  const handleCameraCapture = async (file, lat, lng) => {
-    setLoading(true);
-    try {
-      const url = await uploadToCloudinary(file);
-
-      await addDoc(collection(db, "images"), {
-        url,
-        lat,
-        lng,
-        dateTaken: new Date().toISOString(),
-        timestamp: Date.now(),
-      });
-
-      await fetchImages();
-      setShowCamera(false);
-    } catch (err) {
-      console.error("即拍即傳上傳失敗", err);
-      alert("上傳失敗：" + (err.message || err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Cloudinary unsigned upload
-  const uploadToCloudinary = async (file) => {
-    const form = new FormData();
-    form.append("file", file);
-    form.append("upload_preset", "trashmap_unsigned");
-
-    const res = await fetch(
-      "https://api.cloudinary.com/v1_1/dwhn02tn5/image/upload",
-      {
-        method: "POST",
-        body: form,
+      if ((!lat || !lng) && (exifData?.ImageDescription || exifData?.UserComment || exifData?.XPComment)) {
+        const candidate = exifData.ImageDescription || exifData.UserComment || exifData.XPComment;
+        const geoc = await geocodeAddress(candidate.toString());
+        if (geoc) { lat = geoc.lat; lng = geoc.lng; }
       }
-    );
-    const data = await res.json();
-    return data.secure_url;
+
+      if ((!lat || !lng) && !manualLatLng) {
+        setNeedManualPick(true);
+        setLoadingUpload(false);
+        alert("照片沒有 GPS，也無可用地址。請在地圖上點選位置，或使用含定位的原始照片上傳。");
+        return;
+      }
+
+      if (manualLatLng) { lat = manualLatLng.lat; lng = manualLatLng.lng; }
+
+      const form = new FormData();
+      form.append("file", file);
+      form.append("upload_preset", "trashmap_unsigned");
+
+      const cloudRes = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "https://api.cloudinary.com/v1_1/dwhn02tn5/image/upload");
+        xhr.upload.onprogress = (e) => { if (e.lengthComputable) setProgress(Math.round((e.loaded*100)/e.total)); };
+        xhr.onload = () => { xhr.status >= 200 && xhr.status < 300 ? resolve(JSON.parse(xhr.responseText)) : reject(new Error(xhr.statusText)); };
+        xhr.onerror = () => reject(new Error("Network error during upload"));
+        xhr.send(form);
+      });
+
+      await addDoc(collection(db, "images"), {
+        imageUrl: cloudRes.secure_url,
+        lat,
+        lng,
+        takenTime: takenTime || null,
+        createdAt: serverTimestamp()
+      });
+
+      alert("上傳並儲存成功！");
+      window.location.reload();
+    } catch (err) {
+      console.error("上傳失敗：", err);
+      alert("上傳失敗：" + (err.message || err));
+    } finally { setLoadingUpload(false); }
+  };
+
+  const onManualSelect = (latlng) => {
+    setManualLatLng(latlng);
+    setNeedManualPick(false);
+    alert(`你已選擇位置： ${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}。請再次按 上傳。`);
   };
 
   return (
-    <div className="App">
-      <h1>TrashMap 民眾回報系統</h1>
+    <div className="container">
+      <header><h1>全民科學垃圾回報系統</h1></header>
 
-      <div className="upload-options">
-        <label className="upload-button">
-          從相簿選擇
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileUpload}
-            disabled={loading}
-          />
-        </label>
-
-        <button
-          className="camera-button"
-          onClick={() => setShowCamera(true)}
-          disabled={loading}
-        >
-          即拍即傳
+      <div style={{ marginBottom: 12 }}>
+        <input type="file" accept="image/*" capture="environment" 
+          onChange={(e) => { setFile(e.target.files[0] ?? null); setManualLatLng(null); }} />
+        <button onClick={handleUpload} disabled={loadingUpload} style={{ marginLeft: 8 }}>
+          {loadingUpload ? `上傳中 ${progress}%` : "上傳照片（自動讀取 GPS/時間）"}
         </button>
       </div>
 
-      {showCamera && (
-        <CameraCapture
-          onCapture={handleCameraCapture}
-          onClose={() => setShowCamera(false)}
-        />
+      {needManualPick && (
+        <div style={{ marginBottom: 12, color: "#b00" }}>
+          <strong>請在地圖上點一下位置來指定照片位置（備援）</strong>
+        </div>
       )}
 
-      {loading && <p>載入中...</p>}
-
-      <div style={{ height: "400px", marginTop: "20px" }}>
-        <MapContainer
-          center={[23.7, 120.5]}
-          zoom={10}
-          style={{ height: "100%", width: "100%" }}
-        >
+      <div style={{ height: 520, marginBottom: 12 }}>
+        <MapContainer center={[23.7, 120.5]} zoom={9} style={{ height: "100%", width: "100%" }} whenCreated={(map) => mapRef.current = map}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
-          {images.map((img) =>
-            img.lat && img.lng ? (
-              <Marker key={img.id} position={[img.lat, img.lng]}>
-                <Popup>
-                  <img
-                    src={img.url}
-                    alt="照片"
-                    style={{ width: "200px", display: "block", marginBottom: 5 }}
-                  />
-                  <div>
-                    拍攝時間:{" "}
-                    {img.dateTaken
-                      ? new Date(img.dateTaken).toLocaleString()
-                      : "無資料"}
-                  </div>
-                </Popup>
-              </Marker>
-            ) : null
-          )}
+          {needManualPick && <ClickToSelect onSelect={onManualSelect} />}
+          {photos.map((p, idx) => (p.lat && p.lng) && (
+            <Marker key={idx} position={[p.lat, p.lng]}>
+              <Popup>
+                <div style={{ textAlign: "center" }}>
+                  <img src={p.imageUrl} alt="photo" style={{ width: "180px", display: "block", marginBottom: 6 }} />
+                  <div>{p.takenTime ? new Date(p.takenTime).toLocaleString() : "無時間資訊"}</div>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+          {manualLatLng && <Marker position={[manualLatLng.lat, manualLatLng.lng]} />}
         </MapContainer>
       </div>
     </div>
