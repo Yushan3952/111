@@ -1,11 +1,22 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import "./index.css";
-import App from "./App";
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+h1 {
+  text-align: center;
+  color: #333;
+}
+
+button {
+  margin: 10px;
+  padding: 10px 15px;
+  background-color: #2c7;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #28a745;
+}
