@@ -20,22 +20,24 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 髒亂程度對應顏色
+// 髒亂程度對應 Leaflet marker 顏色名稱
 const levelColors = {
-  1: "2ecc71", // 綠
-  2: "a3e635", // 淡綠
-  3: "f59e0b", // 橘
-  4: "ef4444", // 紅
-  5: "7f1d1d"  // 深紅
+  1: "green",
+  2: "yellow",
+  3: "orange",
+  4: "red",
+  5: "violet"
 };
 
-// 產生不同顏色的 Icon
+// 產生彩色 marker icon
 const getMarkerIcon = (color) =>
   new L.Icon({
-    iconUrl: `https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|${color}`,
-    iconSize: [30, 50],
-    iconAnchor: [15, 50],
-    popupAnchor: [0, -45]
+    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
+    shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
   });
 
 // 手動選點元件
@@ -56,7 +58,7 @@ const App = () => {
   const [file, setFile] = useState(null);
   const [step, setStep] = useState("start"); // start / main
 
-  // 載入 Firestore
+  // 🔹 載入 Firestore
   useEffect(() => {
     const fetchData = async () => {
       const querySnapshot = await getDocs(collection(db, "images"));
@@ -66,7 +68,7 @@ const App = () => {
     fetchData();
   }, []);
 
-  // 處理圖片選擇
+  // 🔹 處理圖片選擇
   const handleFileChange = async (event) => {
     const selectedFile = event.target.files[0];
     if (!selectedFile) return;
@@ -78,7 +80,7 @@ const App = () => {
     let lat = null, lng = null;
 
     if (isCameraShot) {
-      // 📸 即時拍照 → 用 GPS
+      // 即時拍照 → 用 GPS
       try {
         const pos = await new Promise((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true });
@@ -89,7 +91,7 @@ const App = () => {
         alert("即時拍照無法取得定位，請在地圖上點選位置");
       }
     } else {
-      // 🖼 相簿 → 先讀 EXIF
+      // 相簿 → 先讀 EXIF
       await new Promise((resolve) => {
         EXIF.getData(selectedFile, function () {
           const latExif = EXIF.getTag(this, "GPSLatitude");
@@ -125,7 +127,7 @@ const App = () => {
     }
   };
 
-  // 上傳
+  // 🔹 上傳
   const handleUpload = async () => {
     if (!file) {
       alert("請先選擇圖片");
@@ -171,7 +173,7 @@ const App = () => {
       }
     ]);
 
-    // 自動重置
+    // 🔹 自動重置
     setFile(null);
     setManualLocation(null);
     setTrashLevel(3);
@@ -179,7 +181,7 @@ const App = () => {
     alert("上傳完成！");
   };
 
-  // 起始畫面
+  // 🔹 起始畫面
   if (step === "start") {
     return (
       <div style={{ textAlign: "center", padding: "50px" }}>
@@ -239,8 +241,8 @@ const App = () => {
         ))}
 
         {manualLocation && (
-          <Marker position={manualLocation} icon={getMarkerIcon("0000FF")}>
-            <Popup>已選擇的位置</Popup>
+          <Marker position={manualLocation} icon={getMarkerIcon(levelColors[trashLevel])}>
+            <Popup>已選擇的位置（等級：{trashLevel}）</Popup>
           </Marker>
         )}
       </MapContainer>
@@ -249,4 +251,5 @@ const App = () => {
 };
 
 export default App;
+
 
