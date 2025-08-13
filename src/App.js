@@ -240,6 +240,14 @@ const App = () => {
           </button>
         </a>
       </div>
+// 操作區 JSX 中，檔案選擇和髒亂程度選單之後、地圖之前
+<div style={{ margin: "20px 0", textAlign: "center" }}>
+  <img 
+    src={require('./2cfa448f-dc88-4137-b34e-0a2818dbb654.png')} 
+    alt="髒亂程度對照表" 
+    style={{ maxWidth: "100%", height: "auto" }} 
+  />
+</div>
 
       <MapContainer
         center={[23.7, 120.53]}
