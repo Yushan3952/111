@@ -211,10 +211,10 @@ const App = () => {
   // 🔹 操作頁面
   return (
     <div>
-      <h2>TrashMap 上傳</h2>
+      <h1>全民科學垃圾回報系統</h1>
 
       <input type="file" accept="image/*" onChange={handleFileChange} />
-
+      <img src="https://drive.google.com/file/d/1AvNsNNzpxe7tzEOYMqp_8GuOdNZXJDGE/view?usp=sharing">
       <div>
         <label>髒亂程度：</label>
         <select value={trashLevel} onChange={(e) => setTrashLevel(Number(e.target.value))}>
