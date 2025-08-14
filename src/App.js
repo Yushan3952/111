@@ -80,7 +80,6 @@ const App = () => {
     let lat = null, lng = null;
 
     if (isCameraShot) {
-      // 即時拍照 → 用 GPS
       try {
         const pos = await new Promise((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true });
@@ -91,7 +90,6 @@ const App = () => {
         alert("即時拍照無法取得定位，請在地圖上點選位置");
       }
     } else {
-      // 相簿 → 先讀 EXIF
       await new Promise((resolve) => {
         EXIF.getData(selectedFile, function () {
           const latExif = EXIF.getTag(this, "GPSLatitude");
@@ -123,7 +121,7 @@ const App = () => {
     if (lat && lng) {
       setManualLocation([lat, lng]);
     } else {
-      setManualLocation(null); // 等待手點
+      setManualLocation(null);
     }
   };
 
@@ -140,7 +138,6 @@ const App = () => {
 
     setUploading(true);
 
-    // 上傳到 Cloudinary
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", "trashmap_unsigned");
@@ -152,7 +149,6 @@ const App = () => {
     const data = await res.json();
     const imageUrl = data.secure_url;
 
-    // 存到 Firestore
     await addDoc(collection(db, "images"), {
       id: uuidv4(),
       lat: manualLocation[0],
@@ -173,7 +169,6 @@ const App = () => {
       }
     ]);
 
-    // 🔹 自動重置
     setFile(null);
     setManualLocation(null);
     setTrashLevel(3);
@@ -181,24 +176,15 @@ const App = () => {
     alert("上傳完成！");
   };
 
-  // 🔹 起始畫面
   if (step === "start") {
     return (
       <div style={{ textAlign: "center", padding: "50px" }}>
         <h1>全民科學垃圾回報系統</h1>
-        <button
-          style={{ fontSize: "20px", padding: "10px 20px" }}
-          onClick={() => setStep("main")}
-        >
+        <button style={{ fontSize: "20px", padding: "10px 20px" }} onClick={() => setStep("main")}>
           開始使用
         </button>
-
         <div style={{ marginTop: "30px" }}>
-          <a
-            href="https://forms.gle/u9uHmAygxK5fRkmc7"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a href="https://forms.gle/u9uHmAygxK5fRkmc7" target="_blank" rel="noopener noreferrer">
             <button style={{ fontSize: "16px", padding: "8px 16px" }}>
               回饋意見
             </button>
@@ -208,44 +194,46 @@ const App = () => {
     );
   }
 
-  // 🔹 操作頁面
   return (
     <div>
-      <h2>TrashMap 上傳</h2>
+      <h1>全民科學垃圾回報系統</h1>
 
-      <input type="file" accept="image/*" onChange={handleFileChange} />
+      {/* 🔹 上方左右區塊 */}
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
+        {/* 左邊：操作選項 */}
+        <div style={{ flex: 1, paddingRight: "20px" }}>
+          <input type="file" accept="image/*" onChange={handleFileChange} />
+          <div>
+            <label>髒亂程度：</label>
+            <select value={trashLevel} onChange={(e) => setTrashLevel(Number(e.target.value))}>
+              <option value={1}>1 - 非常乾淨</option>
+              <option value={2}>2 - 輕微垃圾</option>
+              <option value={3}>3 - 中等垃圾</option>
+              <option value={4}>4 - 髒亂</option>
+              <option value={5}>5 - 非常髒亂</option>
+            </select>
+          </div>
+          {uploading && <p>上傳中...</p>}
+          <button onClick={handleUpload} disabled={uploading}>上傳</button>
+          <div style={{ marginTop: "10px" }}>
+            <a href="https://forms.gle/u9uHmAygxK5fRkmc7" target="_blank" rel="noopener noreferrer">
+              <button style={{ fontSize: "16px", padding: "6px 12px" }}>回饋意見</button>
+            </a>
+          </div>
+        </div>
 
-      <div>
-        <label>髒亂程度：</label>
-        <select value={trashLevel} onChange={(e) => setTrashLevel(Number(e.target.value))}>
-          <option value={1}>1 - 非常乾淨</option>
-          <option value={2}>2 - 輕微垃圾</option>
-          <option value={3}>3 - 中等垃圾</option>
-          <option value={4}>4 - 髒亂</option>
-          <option value={5}>5 - 非常髒亂</option>
-        </select>
+        {/* 右邊：垃圾等級對照表 */}
+        <div style={{ flex: 1, textAlign: "center" }}>
+          <img
+            src={`${process.env.PUBLIC_URL}/legend.png`}
+            alt="垃圾等級對照表"
+            style={{ width: "100%", maxWidth: "300px", borderRadius: "8px" }}
+          />
+        </div>
       </div>
 
-      {uploading && <p>上傳中...</p>}
-      <button onClick={handleUpload} disabled={uploading}>上傳</button>
-
-      <div style={{ margin: "10px 0" }}>
-        <a
-          href="https://forms.gle/u9uHmAygxK5fRkmc7"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <button style={{ fontSize: "16px", padding: "6px 12px" }}>
-            回饋意見
-          </button>
-        </a>
-      </div>
-
-      <MapContainer
-        center={[23.7, 120.53]}
-        zoom={10}
-        style={{ height: "500px", width: "100%" }}
-      >
+      {/* 🔹 地圖 */}
+      <MapContainer center={[23.7, 120.53]} zoom={10} style={{ height: "500px", width: "100%" }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <LocationSelector onSelect={(pos) => setManualLocation(pos)} />
 
