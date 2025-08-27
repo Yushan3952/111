@@ -179,7 +179,7 @@ const App = () => {
   if (step === "start") {
     return (
       <div style={{ textAlign: "center", padding: "50px" }}>
-        <h1>全民科學垃圾回報系統</h1>
+        <h1>全民科學垃圾回報APP</h1>
         <button style={{ fontSize: "20px", padding: "10px 20px" }} onClick={() => setStep("main")}>
           開始使用
         </button>
@@ -196,7 +196,7 @@ const App = () => {
 
   return (
     <div>
-      <h1>全民科學垃圾回報系統</h1>
+      <h1>全民科學垃圾回報APP</h1>
 
       {/* 🔹 上方左右區塊 */}
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
