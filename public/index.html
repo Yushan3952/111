@@ -4,29 +4,50 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#2c7" />
 
-    <!-- SEO-friendly Meta -->
-    <title>全民科學垃圾回報APP | 回報垃圾位置與髒亂程度</title>
-    <meta name="description" content="全民科學垃圾回報APP，讓大家即時回報垃圾位置與髒亂程度，幫助環境保護，打造更乾淨的生活環境。" />
-    <meta name="keywords" content="垃圾回報, 全民科學, 環境保護, 社區清潔, 回報App, 髒亂程度" />
-    <meta name="robots" content="index, follow" />
+    <!-- SEO Meta -->
+    <title>全民科學垃圾回報系統</title>
+    <meta name="description" content="全民科學垃圾回報系統，讓大家即時回報垃圾位置與髒亂程度。可上傳照片、標記位置，參與環境守護行動。" />
+    <meta name="keywords" content="垃圾回報, 環保, 公民科學, 環境監測, 社區清潔, 地圖回報" />
+    <meta name="author" content="全民科學團隊" />
 
-    <!-- Open Graph / 社群分享 -->
+    <!-- Open Graph / Facebook -->
     <meta property="og:title" content="全民科學垃圾回報系統" />
-    <meta property="og:description" content="即時回報垃圾位置與髒亂程度，共同守護環境。" />
+    <meta property="og:description" content="立即參與垃圾回報，守護清潔環境。" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://yunlintrashmap.vercel.app/" />
-    <meta property="og:image" content="%PUBLIC_URL%/social-share.png" />
+    <meta property="og:url" content="https://你的網站網址/" />
+    <meta property="og:image" content="https://你的網站網址/images/og-image.png" />
 
-    <!-- Twitter Card -->
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="全民科學垃圾回報系統" />
-    <meta name="twitter:description" content="即時回報垃圾位置與髒亂程度，共同守護環境。" />
-    <meta name="twitter:image" content="%PUBLIC_URL%/social-share.png" />
-  </head>
-  <body>
+    <meta name="twitter:description" content="立即參與垃圾回報，守護清潔環境。" />
+    <meta name="twitter:image" content="https://你的網站網址/images/og-image.png" />
+
+    <!-- JSON-LD 結構化資料 -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "全民科學垃圾回報系統",
+        "url": "https://https://yunlintrashmap.vercel.app/",
+        "description": "全民科學垃圾回報系統，讓大家即時回報垃圾位置與髒亂程度。",
+        "applicationCategory": "EnvironmentalMonitoringApplication",
+        "operatingSystem": "All",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "TWD"
+        }
+      }
+    </script>
+
+    <!-- Fallback -->
     <noscript>您需要啟用 JavaScript 才能使用此應用程式。</noscript>
+  </head>
+
+  <body>
     <div id="root"></div>
   </body>
 </html>
