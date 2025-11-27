@@ -1,105 +1,79 @@
-/* ===== 全域背景 ===== */
 body {
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
-  background: linear-gradient(135deg, #a8edea, #fed6e3);
+  background: linear-gradient(to bottom right, #a8edea, #fed6e3); /* 漸層背景 */
   min-height: 100vh;
-}
-
-/* ===== 首頁 ===== */
-.start-page {
-  text-align: center;
-  padding: 50px 20px;
-}
-
-.instruction-card {
-  background: rgba(255, 255, 255, 0.85);
-  padding: 20px;
-  border-radius: 12px;
-  max-width: 500px;
-  margin: 20px auto;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  text-align: left;
-}
-
-.start-btn {
-  margin: 15px 5px;
-  padding: 12px 24px;
-  font-size: 18px;
-  background: #2c7;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.start-btn:hover {
-  background: #28a745;
-}
-
-/* ===== 主畫面 ===== */
-.main-page {
-  padding: 20px;
 }
 
 h1 {
   text-align: center;
-  color: #2c7;
-  font-size: 32px;
-  margin-bottom: 20px;
+  color: #333;
+  margin-top: 20px;
 }
 
-.map-controls {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  max-width: 900px;
-  margin: 0 auto 20px auto;
-}
-
-.controls {
-  background: rgba(255,255,255,0.85);
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  flex: 1;
-  min-width: 280px;
-}
-
-.level-select {
-  margin: 10px 0;
-}
-
-.legend-card {
-  background: rgba(255,255,255,0.85);
-  padding: 10px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  text-align: center;
-  flex: 1;
-  min-width: 280px;
-}
-
-.legend-card img {
-  width: 100%;
-  max-width: 300px;
-  border-radius: 8px;
-}
-
-/* ===== 地圖 ===== */
-.map-container {
-  height: 60vh;
+.container {
   max-width: 900px;
   margin: 0 auto;
+  padding: 12px;
+  background-color: rgba(255, 255, 255, 0.9);
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-/* ===== Leaflet popup 圖片 ===== */
-.leaflet-popup-content img {
-  width: 150px;
+header {
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+input[type="file"] {
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+button {
+  cursor: pointer;
+  padding: 8px 16px;
+  font-size: 14px;
   border-radius: 8px;
-  border: 1px solid #ccc;
-  margin-bottom: 5px;
+  border: none;
+  background-color: #2c7;
+  color: white;
+  transition: 0.3s;
+}
+
+button:hover {
+  background-color: #28a745;
+}
+
+select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-left: 5px;
+}
+
+.map-container {
+  height: 500px;
+  width: 100%;
+  margin-top: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.legend {
+  max-width: 300px;
+  margin: 10px auto;
+  border-radius: 8px;
+}
+
+.popup img {
+  border-radius: 8px;
+  width: 150px;
+}
+
+.instructions {
+  background-color: #fff7;
+  padding: 12px;
+  margin: 12px 0;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
 }
