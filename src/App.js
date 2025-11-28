@@ -8,14 +8,14 @@ import { v4 as uuidv4 } from "uuid";
 
 // Firebase 設定
 const firebaseConfig = {
-  apiKey: "你的firebase-api-key",
+ apiKey: "AIzaSyAeX-tc-Rlr08KU8tPYZ4QcXDFdAx3LYHI",
   authDomain: "trashmap-d648e.firebaseapp.com",
   projectId: "trashmap-d648e",
-  storageBucket: "trashmap-d648e.appspot.com",
-  messagingSenderId: "1059384934230",
-  appId: "你的firebase-app-id"
+  storageBucket: "trashmap-d648e.firebasestorage.app",
+  messagingSenderId: "527164483024",
+  appId: "1:527164483024:web:a40043feb0e05672c085d5",
+  measurementId: "G-MFJDX8XJML"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
