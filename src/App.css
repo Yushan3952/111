@@ -1,10 +1,10 @@
-/* App.css */
+/* App.css — Final Version */
 body, html {
   margin: 0;
   padding: 0;
   font-family: Arial, Helvetica, sans-serif;
   height: 100%;
-background: url('/images/background.jpg') no-repeat center center fixed;
+  background: url('/images/background.jpg') no-repeat center center fixed;
   background-size: cover;
 }
 
@@ -15,12 +15,15 @@ h1 {
   margin-top: 20px;
 }
 
+/* 主白色容器（避免文字貼到背景看不清楚） */
 .container {
   max-width: 900px;
-  margin: 0 auto;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.85); /* 半透明底色，讓文字看得清楚 */
-  border-radius: 12px;
+  margin: 15px auto;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 16px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+  backdrop-filter: blur(3px);
 }
 
 .controls {
@@ -32,15 +35,18 @@ h1 {
 }
 
 .controls > div {
-  flex: 1 1 250px;
+  flex: 1 1 260px;
 }
 
-input[type="file"], select, button {
+/* 表單元素 */
+input[type="file"], 
+select, 
+button {
   width: 100%;
-  padding: 8px;
+  padding: 10px;
   margin-top: 5px;
   font-size: 14px;
-  border-radius: 5px;
+  border-radius: 8px;
   border: none;
 }
 
@@ -55,12 +61,28 @@ button:hover {
   background-color: #28a745;
 }
 
+/* 地圖外框 */
 .map-container {
   width: 100%;
   height: 500px;
   border-radius: 12px;
   overflow: hidden;
-  margin-bottom: 20px;
+  margin: 15px 0;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+}
+
+/* 圖例區塊 */
+.legend-wrapper {
+  width: 100%;
+  text-align: center;
+  margin: 12px 0 20px 0;
+}
+
+.legend-image {
+  max-width: 95%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 /* 手機版調整 */
