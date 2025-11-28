@@ -6,7 +6,7 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
 import { v4 as uuidv4 } from "uuid";
 
-// Firebase 設定
+// Firebase 設
 const firebaseConfig = {
   apiKey: "你的firebase-api-key",
   authDomain: "trashmap-d648e.firebaseapp.com",
