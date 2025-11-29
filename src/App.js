@@ -8,12 +8,13 @@ import { v4 as uuidv4 } from "uuid";
 
 // Firebase 設定
 const firebaseConfig = {
-  apiKey: "你的firebase-api-key",
-  authDomain: "trashmap-d648e.firebaseapp.com",
-  projectId: "trashmap-d648e",
-  storageBucket: "trashmap-d648e.appspot.com",
-  messagingSenderId: "你的senderId",
-  appId: "你的appId"
+ apiKey: "AIzaSyAeX-tc-Rlr08KU8tPYZ4QcXDFdAx3LYHI",
+ authDomain: "trashmap-d648e.firebaseapp.com",
+ projectId: "trashmap-d648e",
+ storageBucket: "trashmap-d648e.appspot.com",
+ messagingSenderId: "527164483024",
+ appId: "1:527164483024:web:a40043feb0e05672c085d5",
+ measurementId: "G-MFJDX8XJML"
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -30,43 +31,40 @@ const getMarkerIcon = (color) =>
     shadowSize: [41, 41]
   });
 
-// 點擊選位置
+// 選擇位置
 const LocationSelector = ({ onSelect }) => {
-  useMapEvents({
-    click(e) {
-      onSelect([e.latlng.lat, e.latlng.lng]);
-    }
-  });
+  useMapEvents({ click: e => onSelect([e.latlng.lat, e.latlng.lng]) });
   return null;
 };
 
 // 地圖自動移動
 function ChangeView({ center }) {
   const map = useMap();
-  if (center) map.setView(center, 16);
+  if(center) map.setView(center, 16);
   return null;
 }
 
 export default function App() {
   const [page, setPage] = useState("home"); // home / map
   const [markers, setMarkers] = useState([]);
-  const [manualLocation, setManualLocation] = useState([23.7, 120.53]); // 預設中心
+  const [manualLocation, setManualLocation] = useState(null);
   const [trashLevel, setTrashLevel] = useState(3);
   const [file, setFile] = useState(null);
 
-  // 讀 Firebase 資料
+  // 讀取 Firebase
   useEffect(() => {
     const fetchData = async () => {
       const querySnapshot = await getDocs(collection(db, "images"));
-      const data = querySnapshot.docs.map((doc) => doc.data());
+      const data = querySnapshot.docs.map(doc => doc.data());
       setMarkers(data);
     };
     fetchData();
   }, []);
 
+  // 上傳
   const handleUpload = async () => {
-    if (!file) return alert("請選擇圖片");
-    if (!manualLocation) return alert("請選擇位置");
+    if(!file) return alert("請選擇圖片");
+    if(!manualLocation) return alert("請選擇位置");
 
     const formData = new FormData();
     formData.append("file", file);
@@ -87,43 +85,40 @@ export default function App() {
       imageUrl,
       level: trashLevel
     };
-
     await addDoc(collection(db, "images"), newDoc);
     setMarkers([...markers, newDoc]);
     setFile(null);
   };
 
-  // ======= 第一畫面 =======
-  if (page === "home") {
+  // 第一畫面
+  if(page === "home") {
     return (
       <div className="home-screen">
-        <h1>全民科學垃圾回報 APP</h1>
+        <h1>全民科學垃圾回報APP</h1>
         <div className="guide">
           <p>操作說明：</p>
-          <ol>
-            <li>點擊「開始」進入地圖頁面</li>
-            <li>在地圖上點擊選擇位置</li>
-            <li>上傳垃圾照片</li>
-            <li>選擇垃圾等級</li>
-          </ol>
+          <p>1. 點擊地圖選擇位置</p>
+          <p>2. 上傳垃圾照片</p>
+          <p>3. 選擇垃圾等級</p>
         </div>
-        <button onClick={() => setPage("map")}>開始</button>
-        <a href="https://forms.gle/u9uHmAygxK5fRkmc7" target="_blank" rel="noopener noreferrer">
-          <button>回饋意見</button>
-        </a>
+        <div>
+          <button onClick={() => setPage("map")}>開始</button>
+          <a href="https://forms.gle/u9uHmAygxK5fRkmc7" target="_blank" rel="noopener noreferrer">
+            <button>回饋意見</button>
+          </a>
+        </div>
       </div>
     );
   }
 
-  // ======= 第二畫面（地圖） =======
+  // 第二畫面
   return (
     <div className="container">
-      <h1>全民科學垃圾回報 APP</h1>
-
+      <h1>全民科學垃圾回報APP</h1>
       <div className="controls">
         <div>
-          <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files[0])} />
-          <select value={trashLevel} onChange={(e) => setTrashLevel(Number(e.target.value))}>
+          <input type="file" accept="image/*" onChange={e => setFile(e.target.files[0])} />
+          <select value={trashLevel} onChange={e => setTrashLevel(Number(e.target.value))}>
             <option value={1}>1 - 非常乾淨</option>
             <option value={2}>2 - 輕微垃圾</option>
             <option value={3}>3 - 中等垃圾</option>
@@ -132,7 +127,7 @@ export default function App() {
           </select>
           <button onClick={handleUpload}>上傳</button>
         </div>
-        <div style={{ textAlign: "center" }}>
+        <div style={{textAlign:'center'}}>
           <a href="https://forms.gle/u9uHmAygxK5fRkmc7" target="_blank" rel="noopener noreferrer">
             <button>回饋意見</button>
           </a>
@@ -140,31 +135,34 @@ export default function App() {
       </div>
 
       <div className="map-container">
-        <MapContainer center={manualLocation} zoom={16} style={{ height: "100%", width: "100%" }}>
+        <MapContainer center={manualLocation || [23.7,120.53]} zoom={16} style={{height:'100%', width:'100%'}}>
           <ChangeView center={manualLocation} />
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"} />
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <LocationSelector onSelect={setManualLocation} />
-          {markers.map((m) => (
+
+          {markers.map(m => (
             <Marker key={m.id} position={[m.lat, m.lng]} icon={getMarkerIcon(levelColors[m.level || 3])}>
               <Popup>
-                <img src={m.imageUrl} alt="uploaded" width="150" />
-                <br />
+                <img src={m.imageUrl} alt="uploaded" width="150"/>
+                <br/>
                 等級：{m.level || 3}
-                <br />
+                <br/>
                 {m.timestamp}
               </Popup>
             </Marker>
           ))}
+
           {manualLocation && (
             <Marker position={manualLocation} icon={getMarkerIcon(levelColors[trashLevel])}>
               <Popup>已選擇位置（等級：{trashLevel}）</Popup>
             </Marker>
           )}
         </MapContainer>
+      </div>
 
-        <div className="legend-panel">
-          <img src="/legend.png" alt="legend" />
-        </div>
+      {/* Legend 固定 */}
+      <div className="legend-panel">
+        <img src="/legend.png" alt="legend"/>
       </div>
     </div>
   );
