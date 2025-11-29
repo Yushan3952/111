@@ -1,59 +1,23 @@
-/* 全局背景保留原本 */
+/* App.css */
 body, html {
   margin: 0;
   padding: 0;
   font-family: Arial, Helvetica, sans-serif;
   height: 100%;
-  background: url('/images/background.jpg') no-repeat center center fixed;
-  background-size: cover;
 }
 
-/* 第一畫面 */
-.home-screen {
-  height: 100vh;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+h1 {
   text-align: center;
-  color: white;
+  color: #fff;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+  margin-top: 20px;
 }
 
-.home-screen h1 {
-  font-size: 2em;
-  margin-bottom: 20px;
-  text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
-}
-
-.home-screen .guide {
-  background: rgba(0,0,0,0.5);
-  padding: 15px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-}
-
-.home-screen button {
-  margin: 5px;
-  padding: 10px 20px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  background-color: #2c7;
-  color: white;
-}
-
-.home-screen button:hover {
-  background-color: #28a745;
-}
-
-/* 第二畫面容器 */
 .container {
   max-width: 900px;
   margin: 20px auto;
   padding: 12px;
-  background: rgba(255,255,255,0.85);
+  background: rgba(255, 255, 255, 0.85);
   border-radius: 12px;
 }
 
@@ -116,32 +80,49 @@ button:hover {
   height: auto;
 }
 
-/* 手機直式響應 */
-@media (max-width: 600px) {
-  .home-screen h1 {
-    font-size: 1.5em;
-  }
-  .home-screen .guide {
-    padding: 10px;
-  }
-  .home-screen button {
-    font-size: 14px;
-    padding: 8px 16px;
-  }
+/* 第一畫面背景 */
+.start-screen {
+  background: url('/images/background.jpg') no-repeat center center fixed;
+  background-size: cover;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  text-align: center;
+}
 
-  .controls {
-    flex-direction: column;
-  }
-  input[type="file"], select, button {
-    font-size: 16px;
-  }
-  .map-container {
-    height: 300px;
-  }
+.start-screen button {
+  margin-top: 20px;
+  padding: 12px 20px;
+  font-size: 18px;
+}
+
+/* 操作說明面板 */
+.guide-panel {
+  margin: 10px 0;
+  padding: 10px;
+  background: #f0f0f0;
+  border-radius: 12px;
+  line-height: 1.5;
+}
+
+/* 手機版調整 */
+@media (max-width: 600px) {
   .legend-panel {
     width: 100px;
     top: 10px;
     right: 10px;
     padding: 6px;
+  }
+  .map-container {
+    height: 300px;
+  }
+  .controls {
+    flex-direction: column;
+  }
+  input[type="file"], select, button {
+    font-size: 16px;
   }
 }
