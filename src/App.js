@@ -137,7 +137,7 @@ export default function App() {
     <div className="start-screen">
       <h1>全民科學垃圾回報APP</h1>
 
-      <div className="instructions">
+      <div className="instructions"style={{ color: "#000" }}>
         <p>📌 操作說明：</p>
         <ul style={{ textAlign: "left" }}>
           <li>選擇或拍攝垃圾照片</li>
@@ -181,7 +181,13 @@ export default function App() {
           {uploading && <p>上傳中...</p>}
           <button onClick={handleUpload} disabled={uploading}>上傳</button>
         </div>
-
+<a
+  href="https://forms.gle/u9uHmAygxK5fRkmc7"
+  target="_blank"
+  rel="noopener noreferrer"
+>
+  <button style={{ marginTop: "10px" }}>意見回饋</button>
+</a>
         {/* Legend 小圖片右上角 */}
         <img
           src={`${process.env.PUBLIC_URL}/legend.png`}
