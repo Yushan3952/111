@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { initializeApp } from "firebase/app";
@@ -30,6 +30,16 @@ const getMarkerIcon = (color) =>
     shadowSize: [41, 41]
   });
 
+// 點擊選位置
+const LocationSelector = ({ onSelect }) => {
+  useMapEvents({
+    click(e) {
+      onSelect([e.latlng.lat, e.latlng.lng]);
+    }
+  });
+  return null;
+};
+
 // 地圖自動移動
 function ChangeView({ center }) {
   const map = useMap();
@@ -44,7 +54,7 @@ export default function App() {
   const [trashLevel, setTrashLevel] = useState(3);
   const [file, setFile] = useState(null);
 
-  // 讀取 Firebase 資料
+  // 讀 Firebase 資料
   useEffect(() => {
     const fetchData = async () => {
       const querySnapshot = await getDocs(collection(db, "images"));
@@ -54,7 +64,6 @@ export default function App() {
     fetchData();
   }, []);
 
-  // 上傳
   const handleUpload = async () => {
     if (!file) return alert("請選擇圖片");
     if (!manualLocation) return alert("請選擇位置");
@@ -65,7 +74,7 @@ export default function App() {
 
     const res = await fetch("https://api.cloudinary.com/v1_1/dwhn02tn5/image/upload", {
       method: "POST",
-      body: formData,
+      body: formData
     });
     const data = await res.json();
     const imageUrl = data.secure_url;
@@ -76,7 +85,7 @@ export default function App() {
       lng: manualLocation[1],
       timestamp: new Date().toISOString(),
       imageUrl,
-      level: trashLevel,
+      level: trashLevel
     };
 
     await addDoc(collection(db, "images"), newDoc);
@@ -84,6 +93,7 @@ export default function App() {
     setFile(null);
   };
 
+  // ======= 第一畫面 =======
   if (page === "home") {
     return (
       <div className="home-screen">
@@ -105,6 +115,7 @@ export default function App() {
     );
   }
 
+  // ======= 第二畫面（地圖） =======
   return (
     <div className="container">
       <h1>全民科學垃圾回報 APP</h1>
@@ -122,31 +133,19 @@ export default function App() {
           <button onClick={handleUpload}>上傳</button>
         </div>
         <div style={{ textAlign: "center" }}>
-          <a
-            href="https://forms.gle/u9uHmAygxK5fRkmc7"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a href="https://forms.gle/u9uHmAygxK5fRkmc7" target="_blank" rel="noopener noreferrer">
             <button>回饋意見</button>
           </a>
         </div>
       </div>
 
       <div className="map-container">
-        <MapContainer
-          center={manualLocation}
-          zoom={16}
-          style={{ height: "100%", width: "100%" }}
-        >
+        <MapContainer center={manualLocation} zoom={16} style={{ height: "100%", width: "100%" }}>
           <ChangeView center={manualLocation} />
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"} />
+          <LocationSelector onSelect={setManualLocation} />
           {markers.map((m) => (
-            <Marker
-              key={m.id}
-              position={[m.lat, m.lng]}
-              icon={getMarkerIcon(levelColors[m.level || 3])}
-            >
+            <Marker key={m.id} position={[m.lat, m.lng]} icon={getMarkerIcon(levelColors[m.level || 3])}>
               <Popup>
                 <img src={m.imageUrl} alt="uploaded" width="150" />
                 <br />
@@ -156,7 +155,13 @@ export default function App() {
               </Popup>
             </Marker>
           ))}
+          {manualLocation && (
+            <Marker position={manualLocation} icon={getMarkerIcon(levelColors[trashLevel])}>
+              <Popup>已選擇位置（等級：{trashLevel}）</Popup>
+            </Marker>
+          )}
         </MapContainer>
+
         <div className="legend-panel">
           <img src="/legend.png" alt="legend" />
         </div>
