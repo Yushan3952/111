@@ -11,7 +11,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAeX-tc-Rlr08KU8tPYZ4QcXDFdAx3LYHI",
   authDomain: "trashmap-d648e.firebaseapp.com",
   projectId: "trashmap-d648e",
-  storageBucket: "trashmap-d648e.firebasestorage.app",
+  storageBucket: "trashmap-d648e.appspot.com",
   messagingSenderId: "527164483024",
   appId: "1:527164483024:web:a40043feb0e05672c085d5",
   measurementId: "G-MFJDX8XJML"
@@ -54,8 +54,6 @@ export default function App() {
   const [trashLevel, setTrashLevel] = useState(3);
   const [file, setFile] = useState(null);
   const [loadingLocation, setLoadingLocation] = useState(true);
-
-  // 操作說明 — 重新做成獨立 Modal
   const [showGuide, setShowGuide] = useState(false);
 
   // 讀取 Firebase 資料
@@ -123,12 +121,12 @@ export default function App() {
 
   return (
     <>
-      {/* 🔥 固定 Legend Panel（與操作說明分開） */}
+      {/* Legend 固定 */}
       <div className="legend-panel">
         <img src="/legend.png" alt="legend" />
       </div>
 
-      {/* 🔥 操作說明 Modal */}
+      {/* 操作說明 Modal */}
       {showGuide && (
         <div className="modal-bg" onClick={() => setShowGuide(false)}>
           <div className="modal-box" onClick={(e) => e.stopPropagation()}>
@@ -141,7 +139,7 @@ export default function App() {
         </div>
       )}
 
-      {/* 主要內容區 */}
+      {/* 主要區塊 */}
       <div className="container">
         <h1>全民科學垃圾回報 APP</h1>
 
@@ -170,7 +168,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* 地圖區 */}
         <div className="map-container">
           <MapContainer
             center={manualLocation || [23.7, 120.53]}
@@ -182,7 +179,11 @@ export default function App() {
             <LocationSelector onSelect={setManualLocation} />
 
             {markers.map((m) => (
-              <Marker key={m.id} position={[m.lat, m.lng]} icon={getMarkerIcon(levelColors[m.level || 3])}>
+              <Marker
+                key={m.id}
+                position={[m.lat, m.lng]}
+                icon={getMarkerIcon(levelColors[m.level || 3])}
+              >
                 <Popup>
                   <img src={m.imageUrl} alt="uploaded" width="150" />
                   <br />
