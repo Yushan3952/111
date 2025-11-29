@@ -8,12 +8,13 @@ import { v4 as uuidv4 } from "uuid";
 
 // Firebase 設定
 const firebaseConfig = {
-  apiKey: "AIzaSyAeX-tc-Rlr08KU8tPYZ4QcXDFdAx3LYHI",
-  authDomain: "trashmap-d648e.firebaseapp.com",
-  projectId: "trashmap-d648e",
-  storageBucket: "trashmap-d648e.firebasestorage.app",
-  messagingSenderId: "527164483024",
-  appId: "1:527164483024:web:a40043feb0e05672c085d5",
+ apiKey: "AIzaSyAeX-tc-Rlr08KU8tPYZ4QcXDFdAx3LYHI",
+ authDomain: "trashmap-d648e.firebaseapp.com",
+ projectId: "trashmap-d648e",
+ storageBucket: "trashmap-d648e.appspot.com",
+ messagingSenderId: "527164483024",
+ appId: "1:527164483024:web:a40043feb0e05672c085d5",
+ measurementId: "G-MFJDX8XJML"
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -27,16 +28,18 @@ const getMarkerIcon = (color) =>
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
-    shadowSize: [41, 41],
+    shadowSize: [41, 41]
   });
 
 // 選擇地圖位置
 const LocationSelector = ({ onSelect }) => {
-  useMapEvents({ click(e) { onSelect([e.latlng.lat, e.latlng.lng]); } });
+  useMapEvents({
+    click(e) { onSelect([e.latlng.lat, e.latlng.lng]); }
+  });
   return null;
 };
 
-// 地圖自動移動
+// 自動切換地圖中心
 function ChangeView({ center }) {
   const map = useMap();
   if(center) map.setView(center, 16);
@@ -50,8 +53,9 @@ export default function App() {
   const [trashLevel, setTrashLevel] = useState(3);
   const [file, setFile] = useState(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
-  // 讀取 Firebase 資料
+  // 載入 Firebase 資料
   useEffect(() => {
     const fetchData = async () => {
       const querySnapshot = await getDocs(collection(db, "images"));
@@ -61,7 +65,7 @@ export default function App() {
     fetchData();
   }, []);
 
-  // 取得手機定位
+  // 取得手機定位（第二畫面才用）
   useEffect(() => {
     if(page !== "map") return;
     setLoadingLocation(true);
@@ -77,16 +81,15 @@ export default function App() {
         setLoadingLocation(false);
       },
       () => {
-        alert('定位失敗，請直接點擊地圖選擇位置');
+        alert('定位失敗，請點擊地圖選擇位置');
         setLoadingLocation(false);
       }
     )
   }, [page]);
 
-  // 上傳
   const handleUpload = async () => {
-    if (!file) return alert("請選擇圖片");
-    if (!manualLocation) return alert("請選擇位置");
+    if(!file) return alert("請選擇圖片");
+    if(!manualLocation) return alert("請選擇位置");
 
     const formData = new FormData();
     formData.append("file", file);
@@ -94,7 +97,7 @@ export default function App() {
 
     const res = await fetch("https://api.cloudinary.com/v1_1/dwhn02tn5/image/upload", {
       method: "POST",
-      body: formData,
+      body: formData
     });
     const data = await res.json();
     const imageUrl = data.secure_url;
@@ -105,7 +108,7 @@ export default function App() {
       lng: manualLocation[1],
       timestamp: new Date().toISOString(),
       imageUrl,
-      level: trashLevel,
+      level: trashLevel
     };
     await addDoc(collection(db, "images"), newDoc);
     setMarkers([...markers, newDoc]);
@@ -117,35 +120,50 @@ export default function App() {
     return (
       <div className="landing-container">
         <h1>全民科學垃圾回報 APP</h1>
-        <div className="landing-buttons">
+        <p>操作說明：</p>
+        <p>1. 點擊地圖選擇位置</p>
+        <p>2. 上傳垃圾照片</p>
+        <p>3. 選擇垃圾等級</p>
+        <div>
           <button onClick={() => setPage("map")}>開始回報</button>
           <a href="https://forms.gle/u9uHmAygxK5fRkmc7" target="_blank" rel="noopener noreferrer">
             <button>回饋意見</button>
           </a>
         </div>
-        <div className="landing-guide">
-          <h2>操作說明</h2>
-          <p>1. 點擊開始回報進入地圖頁面。</p>
-          <p>2. 點擊地圖選擇位置。</p>
-          <p>3. 上傳垃圾照片並選擇垃圾等級。</p>
-        </div>
       </div>
     )
   }
 
-  // Map Page
+  // 地圖畫面
   if(loadingLocation) return <div style={{padding:20, fontSize:20}}>正在取得定位中，請稍候...</div>;
 
   return (
-    <div className="map-page">
+    <>
+      {/* Legend 固定面板 */}
       <div className="legend-panel">
         <img src="/legend.png" alt="legend" />
       </div>
+
+      {/* 操作說明 Modal */}
+      {showGuide && (
+        <div className="modal-bg" onClick={() => setShowGuide(false)}>
+          <div className="modal-box" onClick={(e)=>e.stopPropagation()}>
+            <h2>操作說明</h2>
+            <p>1. 點擊地圖選擇位置</p>
+            <p>2. 上傳垃圾照片</p>
+            <p>3. 選擇垃圾等級</p>
+            <button onClick={()=>setShowGuide(false)}>關閉</button>
+          </div>
+        </div>
+      )}
+
       <div className="container">
+        <h1>全民科學垃圾回報 APP</h1>
+
         <div className="controls">
           <div>
-            <input type="file" accept="image/*" onChange={e => setFile(e.target.files[0])} />
-            <select value={trashLevel} onChange={e => setTrashLevel(Number(e.target.value))}>
+            <input type="file" accept="image/*" onChange={e=>setFile(e.target.files[0])}/>
+            <select value={trashLevel} onChange={e=>setTrashLevel(Number(e.target.value))}>
               <option value={1}>1 - 非常乾淨</option>
               <option value={2}>2 - 輕微垃圾</option>
               <option value={3}>3 - 中等垃圾</option>
@@ -154,6 +172,13 @@ export default function App() {
             </select>
             <button onClick={handleUpload}>上傳</button>
           </div>
+
+          <div style={{textAlign:'center'}}>
+            <button onClick={()=>setShowGuide(true)}>操作說明</button>
+            <a href="https://forms.gle/u9uHmAygxK5fRkmc7" target="_blank" rel="noopener noreferrer">
+              <button>回饋意見</button>
+            </a>
+          </div>
         </div>
 
         <div className="map-container">
@@ -161,15 +186,18 @@ export default function App() {
             <ChangeView center={manualLocation} />
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             <LocationSelector onSelect={setManualLocation} />
-            {markers.map(m => (
+
+            {markers.map(m=>(
               <Marker key={m.id} position={[m.lat, m.lng]} icon={getMarkerIcon(levelColors[m.level || 3])}>
                 <Popup>
-                  <img src={m.imageUrl} alt="uploaded" width="150" /><br/>
+                  <img src={m.imageUrl} alt="uploaded" width="150"/>
+                  <br/>
                   等級：{m.level || 3}<br/>
                   {m.timestamp}
                 </Popup>
               </Marker>
             ))}
+
             {manualLocation && (
               <Marker position={manualLocation} icon={getMarkerIcon(levelColors[trashLevel])}>
                 <Popup>已選擇位置（等級：{trashLevel}）</Popup>
@@ -178,6 +206,6 @@ export default function App() {
           </MapContainer>
         </div>
       </div>
-    </div>
-  )
+    </>
+  );
 }
