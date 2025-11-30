@@ -1,4 +1,4 @@
-/* App.css */
+/* 全域設定 */
 body, html {
   margin: 0;
   padding: 0;
@@ -6,15 +6,22 @@ body, html {
   height: 100%;
 }
 
-/* 第一畫面背景 */
+/* ============================
+   第一畫面：Start Screen
+============================ */
 .start-screen {
   width: 100%;
   height: 100vh;
+  background-image: url("/images/background.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+
   color: #fff;
   text-align: center;
 }
@@ -22,33 +29,84 @@ body, html {
 .start-screen h1 {
   font-size: 2rem;
   margin-bottom: 20px;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
 }
 
-.start-screen button, .start-screen a button {
-  margin: 5px;
-  padding: 10px 20px;
-  font-size: 16px;
+.start-screen button {
+  margin: 8px;
+  padding: 12px 22px;
+  font-size: 18px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  background-color: #28a745;
+  background-color: rgba(40,167,69,0.95);
   color: #fff;
+  transition: 0.2s;
 }
 
 .start-screen button:hover {
-  background-color: #2c7;
+  background-color: #2ecc71;
 }
 
-/* 第二畫面 */
+/* ============================
+   第二畫面內容區
+============================ */
 .container {
   max-width: 900px;
-  margin: 20px auto;
+  margin: 10px auto;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255,255,255,0.95);
   border-radius: 12px;
 }
 
+/* 操作說明 */
+.guide-panel {
+  margin-bottom: 10px;
+  padding: 10px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+/* 地圖容器 */
+.map-container {
+  width: 100%;
+  height: 500px;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+/* ============================
+   Legend
+============================ */
+.legend {
+  width: 110px;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* ============================
+   點位 Popup（照片）
+============================ */
+.popup-image {
+  width: 180px;
+  height: 110px;         /* ⭐ 讓它偏扁的比例 */
+  object-fit: cover;     /* 自動裁切避免變形 */
+  border-radius: 6px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* ============================
+   控制列
+============================ */
 .controls {
   display: flex;
   flex-wrap: wrap;
@@ -66,7 +124,7 @@ input[type="file"], select, button {
   padding: 8px;
   margin-top: 5px;
   font-size: 14px;
-  border-radius: 5px;
+  border-radius: 6px;
   border: none;
 }
 
@@ -78,66 +136,37 @@ button {
 }
 
 button:hover {
-  background-color: #2c7;
+  background-color: #2ecc71;
 }
 
-.map-container {
-  width: 100%;
-  height: 500px;
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 20px;
-  position: relative;
-}
-
-/* Legend Panel */
-.legend-panel {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 140px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 12px;
-  padding: 10px;
-  text-align: center;
-  z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-}
-
-.legend {
-  width: 100px;       /* 調整你想要的大小 */
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-}
-
-/* 操作說明 */
-.guide-panel {
-  margin-bottom: 10px;
-  padding: 10px;
-  background: rgba(255,255,255,0.9);
-  border-radius: 8px;
-}
-
-/* 手機版調整 */
+/* ============================
+   手機版調整
+============================ */
 @media (max-width: 600px) {
-  .legend-panel {
-    width: 100px;
+
+  .legend {
+    width: 90px;
     top: 10px;
     right: 10px;
-    padding: 6px;
   }
 
   .map-container {
-    height: 300px;
+    height: 320px;
   }
 
   .controls {
     flex-direction: column;
   }
+
+  input[type="file"], select, button {
+    font-size: 16px;
+  }
+
+  .popup-image {
+    width: 150px;
+    height: 90px; 
+  }
+}
 
   input[type="file"], select, button {
     font-size: 16px;
