@@ -204,7 +204,7 @@ export default function App() {
         {markers.map((m, idx) => (
           <Marker key={idx} position={[m.lat, m.lng]} icon={getMarkerIcon(levelColors[m.level || 3])}>
             <Popup className="popup">
-              <img src={m.imageUrl} alt="uploaded" />
+              <img src={m.imageUrl} alt="uploaded"className="popup-image"  />
               <br />等級：{m.level || 3}<br />{m.timestamp}
             </Popup>
           </Marker>
