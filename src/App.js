@@ -162,6 +162,8 @@ export default function App() {
   return (
     <div className="container">
       <h1>全民科學垃圾回報APP</h1>
+  
+  {/* Legend 放在標題下面 */}  
 <div className="legend-wrapper">
     <img
       src={`${process.env.PUBLIC_URL}/legend.png`}
