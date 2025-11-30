@@ -137,7 +137,7 @@ export default function App() {
     <div className="start-screen">
       <h1>全民科學垃圾回報APP</h1>
 
-      <div className="instructions"style={{ color: "#000" }}>
+      <div className="instructions">
         <p>📌 操作說明：</p>
         <ul style={{ textAlign: "left" }}>
           <li>選擇或拍攝垃圾照片</li>
