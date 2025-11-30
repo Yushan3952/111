@@ -162,7 +162,13 @@ export default function App() {
   return (
     <div className="container">
       <h1>全民科學垃圾回報APP</h1>
-
+<div className="legend-wrapper">
+    <img
+      src={`${process.env.PUBLIC_URL}/legend.png`}
+      alt="垃圾等級對照表"
+      className="legend"
+    />
+  </div>
       <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"10px" }}>
         <div style={{ flex:1, paddingRight:"20px" }}>
           <input type="file" accept="image/*" onChange={handleFileChange} />
@@ -188,12 +194,7 @@ export default function App() {
 >
   <button style={{ marginTop: "10px" }}>意見回饋</button>
 </a>
-        {/* Legend 小圖片右上角 */}
-        <img
-          src={`${process.env.PUBLIC_URL}/legend.png`}
-          alt="垃圾等級對照表"
-          className="legend"
-        />
+      
       </div>
 
       <MapContainer center={[23.7, 120.53]} zoom={10} className="map-container">
