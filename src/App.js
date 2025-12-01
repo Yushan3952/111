@@ -8,7 +8,7 @@ import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
 import { v4 as uuidv4 } from "uuid";
 import "./App.css";
 
-// 🔹 Firebase 設定
+// 🔹 Firebase 
 const firebaseConfig = {
   apiKey: "AIzaSyBqOaY9c3Uo6KkG8fD7Vx5L3X2P2x1H0q8",
   authDomain: "trashmap-d648e.firebaseapp.com",
