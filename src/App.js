@@ -175,6 +175,12 @@ export default function App() {
             imageUrl
           })
         });
+        const emailData = await emailRes.json();
+
+if (!emailRes.ok) {
+  throw new Error(emailData.message || "寄信失敗");
+}
+
         alert("✅ 上傳完成！\n"+
              " 我們會協助聯絡清潔隊的\n"+
         "📍 " + geo.county + " " + geo.town + "\n" +
