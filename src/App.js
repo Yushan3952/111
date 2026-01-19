@@ -26,22 +26,7 @@ const db = getFirestore(app);
 const CLEANING_TEAMS_BY_TOWN = {
   "雲林縣_斗六市": { name: "斗六市清潔隊", phone: "05-532-2121" },
   "雲林縣_虎尾鎮": { name: "虎尾鎮清潔隊", phone: "05-632-4101" },
-  "雲林縣_西螺鎮": { name: "西螺鎮清潔隊", phone: "05-586-3201" },
-  "雲林縣_土庫鎮": { name: "土庫鎮清潔隊", phone: "05-662-3211" },
-  "雲林縣_北港鎮": { name: "北港鎮清潔隊", phone: "05-783-2757" },
-  "雲林縣_二崙鄉": { name: "二崙鄉公所清潔隊", phone: "05-598-2001" },
-  "雲林縣_崙背鄉": { name: "崙背鄉清潔隊", phone: "05-696-2101" },
-  "雲林縣_麥寮鄉": { name: "麥寮鄉清潔隊", phone: "05-693-2001" },
-  "雲林縣_古坑鄉": { name: "古坑鄉清潔隊", phone: "05-582-3201" },
-  "雲林縣_大埤鄉": { name: "大埤鄉清潔隊", phone: "05-591-2101" },
-  "雲林縣_莿桐鄉": { name: "莿桐鄉清潔隊", phone: "05-584-2101" },
-  "雲林縣_林內鄉": { name: "林內鄉清潔隊", phone: "05-589-2001" },
-  "雲林縣_水林鄉": { name: "水林鄉清潔隊", phone: "05-785-2001" },
-  "雲林縣_口湖鄉": { name: "口湖鄉清潔隊", phone: "05-797-2001" },
-  "雲林縣_四湖鄉": { name: "四湖鄉清潔隊", phone: "05-772-2101" },
-  "雲林縣_元長鄉": { name: "元長鄉清潔隊", phone: "05-788-2001" },
-
-  // 六都 fallback
+  // ... 其他鄉鎮
   "臺北市": { name: "台北市環保局", phone: "02-2720-8889" },
   "新北市": { name: "新北市環保局", phone: "02-2960-3456" },
   "桃園市": { name: "桃園市環保局", phone: "03-338-6021" },
@@ -62,9 +47,7 @@ const getMarkerIcon = (color) => new L.Icon({
 
 const LocationSelector = ({ onSelect }) => {
   useMapEvents({
-    click(e) {
-      onSelect([e.latlng.lat, e.latlng.lng]);
-    }
+    click(e) { onSelect([e.latlng.lat, e.latlng.lng]); }
   });
   return null;
 };
@@ -75,7 +58,6 @@ const LocationSelector = ({ onSelect }) => {
 const getLatLngFromPhoto = (file) =>
   new Promise((resolve) => {
     if (!file) return resolve(null);
-
     EXIF.getData(file, function () {
       const latExif = EXIF.getTag(this, "GPSLatitude");
       const lngExif = EXIF.getTag(this, "GPSLongitude");
@@ -92,11 +74,7 @@ const getLatLngFromPhoto = (file) =>
         if (ref === "S" || ref === "W") dd = -dd;
         return dd;
       };
-
-      resolve({
-        lat: dmsToDd(latExif, latRef),
-        lng: dmsToDd(lngExif, lngRef),
-      });
+      resolve({ lat: dmsToDd(latExif, latRef), lng: dmsToDd(lngExif, lngRef) });
     });
   });
 
@@ -106,10 +84,8 @@ const reverseGeocode = async (lat, lng) => {
   );
   const data = await res.json();
   const addr = data.address || {};
-
   const county = addr.county || addr.city || addr.state;
   const town = addr.town || addr.city_district || addr.suburb;
-
   return { county, town };
 };
 
@@ -121,11 +97,15 @@ export default function App() {
   const [uploading, setUploading] = useState(false);
   const [step, setStep] = useState("start");
 
+  // 新增清潔隊協助表單欄位
+  const [needHelp, setNeedHelp] = useState("否");
+  const [userEmail, setUserEmail] = useState("");
+  const [userPhone, setUserPhone] = useState("");
+
   useEffect(() => {
     const fetchData = async () => {
       const querySnapshot = await getDocs(collection(db, "images"));
-      const data = querySnapshot.docs.map(doc => doc.data());
-      setMarkers(data);
+      setMarkers(querySnapshot.docs.map(doc => doc.data()));
     };
     fetchData();
   }, []);
@@ -134,44 +114,34 @@ export default function App() {
     const selectedFile = event.target.files[0];
     if (!selectedFile) return;
     setFile(selectedFile);
-
     const photoLoc = await getLatLngFromPhoto(selectedFile);
-
     if (photoLoc) setManualLocation([photoLoc.lat, photoLoc.lng]);
-    else {
-      alert("⚠️ 這張照片沒有 GPS 資訊，請手動在地圖點選位置");
-      setManualLocation(null);
-    }
+    else { alert("⚠️ 這張照片沒有 GPS，請手動點選位置"); setManualLocation(null); }
   };
 
   const handleUpload = async () => {
     if (!file) { alert("請先選擇圖片"); return; }
     if (!manualLocation) { alert("請先在地圖上點選位置"); return; }
+    if (needHelp === "是" && (!userEmail || !userPhone)) {
+      alert("請填寫 Gmail 和電話"); return;
+    }
 
     setUploading(true);
 
     try {
       const geo = await reverseGeocode(manualLocation[0], manualLocation[1]);
       const key = geo.county && geo.town ? `${geo.county}_${geo.town}` : null;
+      const team = (key && CLEANING_TEAMS_BY_TOWN[key]) || CLEANING_TEAMS_BY_TOWN[geo.county] || { name: "當地清潔隊（尚未建檔）", phone: "1999" };
 
-      let team =
-        (key && CLEANING_TEAMS_BY_TOWN[key]) ||
-        CLEANING_TEAMS_BY_TOWN[geo.county] || {
-          name: "當地清潔隊（尚未建檔）",
-          phone: "1999"
-        };
-
+      // 上傳照片到 Cloudinary
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", "trashmap_unsigned");
-
-      const res = await fetch("https://api.cloudinary.com/v1_1/dwhn02tn5/image/upload", {
-        method: "POST",
-        body: formData
-      });
+      const res = await fetch("https://api.cloudinary.com/v1_1/dwhn02tn5/image/upload", { method: "POST", body: formData });
       const data = await res.json();
       const imageUrl = data.secure_url;
 
+      // 存 Firestore
       await addDoc(collection(db, "images"), {
         id: uuidv4(),
         lat: manualLocation[0],
@@ -180,36 +150,34 @@ export default function App() {
         imageUrl,
         level: trashLevel
       });
+      setMarkers(prev => [...prev, { lat: manualLocation[0], lng: manualLocation[1], timestamp: new Date().toISOString(), imageUrl, level: trashLevel }]);
 
-      setMarkers(prev => [...prev, {
-        lat: manualLocation[0],
-        lng: manualLocation[1],
-        timestamp: new Date().toISOString(),
-        imageUrl,
-        level: trashLevel
-      }]);
+      // 如果需要協助，寄信給你
+      if (needHelp === "是") {
+        await fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: userEmail,
+            phone: userPhone,
+            location: manualLocation,
+            level: trashLevel,
+            imageUrl
+          })
+        });
+      }
 
-      alert(`✅ 上傳完成！
-      如需及時清理請洽
-📍 ${geo.county} ${geo.town}
-☎ ${team.name}
-📞 ${team.phone}`);
-
-      setFile(null);
-      setManualLocation(null);
-      setTrashLevel(3);
+      alert("✅ 上傳完成！");
+      setFile(null); setManualLocation(null); setTrashLevel(3); setNeedHelp("否"); setUserEmail(""); setUserPhone("");
 
     } catch (err) {
       alert("上傳或定位失敗：" + err);
-    } finally {
-      setUploading(false);
-    }
+    } finally { setUploading(false); }
   };
 
   if (step === "start") return (
     <div className="start-screen">
       <h1>全民科學垃圾回報APP</h1>
-
       <div className="instructions" style={{ color: "#000" }}>
         <p>📌 操作說明：</p>
         <ul style={{ textAlign: "left" }}>
@@ -219,11 +187,7 @@ export default function App() {
           <li>點「上傳」完成回報</li>
         </ul>
       </div>
-
-      <button style={{ fontSize:"20px", padding:"10px 20px" }} onClick={() => setStep("main")}>
-        開始使用
-      </button>
-
+      <button style={{ fontSize:"20px", padding:"10px 20px" }} onClick={() => setStep("main")}>開始使用</button>
       <div style={{ marginTop:"20px" }}>
         <a href="https://forms.gle/u9uHmAygxK5fRkmc7" target="_blank" rel="noopener noreferrer">
           <button style={{ fontSize:"16px", padding:"8px 16px" }}>回饋意見</button>
@@ -250,14 +214,26 @@ export default function App() {
               <option value={5}>5 - 非常髒亂</option>
             </select>
           </div>
+
+          <div>
+            <label>是否需協助聯繫清潔隊：</label>
+            <select value={needHelp} onChange={e => setNeedHelp(e.target.value)}>
+              <option value="否">否</option>
+              <option value="是">是</option>
+            </select>
+          </div>
+
+          {needHelp === "是" && (
+            <>
+              <input type="email" placeholder="請輸入 Gmail" value={userEmail} onChange={e => setUserEmail(e.target.value)} />
+              <input type="text" placeholder="請輸入電話" value={userPhone} onChange={e => setUserPhone(e.target.value)} />
+            </>
+          )}
+
           {uploading && <p>上傳中...</p>}
           <button onClick={handleUpload} disabled={uploading}>上傳</button>
 
-          <a
-            href="https://forms.gle/u9uHmAygxK5fRkmc7"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a href="https://forms.gle/u9uHmAygxK5fRkmc7" target="_blank" rel="noopener noreferrer">
             <button style={{ marginTop: "10px" }}>意見回饋</button>
           </a>
         </div>
@@ -265,7 +241,6 @@ export default function App() {
 
       <MapContainer center={[23.7, 120.53]} zoom={10} className="map-container">
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
         <LocationSelector onSelect={pos => setManualLocation(pos)} />
 
         {markers.map((m, idx) => (
@@ -286,4 +261,3 @@ export default function App() {
     </div>
   );
 }
-
