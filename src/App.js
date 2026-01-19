@@ -250,7 +250,6 @@ export default function App() {
               <option value={5}>5 - 非常髒亂</option>
             </select>
           </div>
-
           {uploading && <p>上傳中...</p>}
           <button onClick={handleUpload} disabled={uploading}>上傳</button>
 
