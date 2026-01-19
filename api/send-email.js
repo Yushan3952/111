@@ -31,8 +31,7 @@ export default async function handler(req, res) {
         <p>等級: ${level}</p>
         <p>使用者 Gmail: ${email}</p>
         <p>使用者電話: ${phone}</p>
-        <p>照片:</p>
-        <img src="${imageUrl}" style="max-width:300px;"/>
+      
       `,
     };
 
