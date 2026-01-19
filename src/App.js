@@ -8,7 +8,7 @@ import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
 import { v4 as uuidv4 } from "uuid";
 import "./App.css";
 
-// 🔹 Firebase 
+// 🔹 Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBqOaY9c3Uo6KkG8fD7Vx5L3X2P2x1H0q8",
   authDomain: "trashmap-d648e.firebaseapp.com",
@@ -19,6 +19,36 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+// ------------------
+// 清潔隊資料（可擴充）
+// ------------------
+const CLEANING_TEAMS_BY_TOWN = {
+  "雲林縣_斗六市": { name: "斗六市清潔隊", phone: "05-532-2121" },
+  "雲林縣_虎尾鎮": { name: "虎尾鎮清潔隊", phone: "05-632-4101" },
+  "雲林縣_西螺鎮": { name: "西螺鎮清潔隊", phone: "05-586-3201" },
+  "雲林縣_土庫鎮": { name: "土庫鎮清潔隊", phone: "05-662-3211" },
+  "雲林縣_北港鎮": { name: "北港鎮清潔隊", phone: "05-783-2757" },
+  "雲林縣_二崙鄉": { name: "二崙鄉公所清潔隊", phone: "05-598-2001" },
+  "雲林縣_崙背鄉": { name: "崙背鄉清潔隊", phone: "05-696-2101" },
+  "雲林縣_麥寮鄉": { name: "麥寮鄉清潔隊", phone: "05-693-2001" },
+  "雲林縣_古坑鄉": { name: "古坑鄉清潔隊", phone: "05-582-3201" },
+  "雲林縣_大埤鄉": { name: "大埤鄉清潔隊", phone: "05-591-2101" },
+  "雲林縣_莿桐鄉": { name: "莿桐鄉清潔隊", phone: "05-584-2101" },
+  "雲林縣_林內鄉": { name: "林內鄉清潔隊", phone: "05-589-2001" },
+  "雲林縣_水林鄉": { name: "水林鄉清潔隊", phone: "05-785-2001" },
+  "雲林縣_口湖鄉": { name: "口湖鄉清潔隊", phone: "05-797-2001" },
+  "雲林縣_四湖鄉": { name: "四湖鄉清潔隊", phone: "05-772-2101" },
+  "雲林縣_元長鄉": { name: "元長鄉清潔隊", phone: "05-788-2001" },
+
+  // 六都 fallback
+  "臺北市": { name: "台北市環保局", phone: "02-2720-8889" },
+  "新北市": { name: "新北市環保局", phone: "02-2960-3456" },
+  "桃園市": { name: "桃園市環保局", phone: "03-338-6021" },
+  "臺中市": { name: "台中市環保局", phone: "04-2228-9111" },
+  "臺南市": { name: "台南市環保局", phone: "06-268-6751" },
+  "高雄市": { name: "高雄市環保局", phone: "07-735-1500" }
+};
 
 const levelColors = { 1:"green", 2:"yellow", 3:"orange", 4:"red", 5:"violet" };
 const getMarkerIcon = (color) => new L.Icon({
@@ -37,6 +67,50 @@ const LocationSelector = ({ onSelect }) => {
     }
   });
   return null;
+};
+
+// ------------------
+// 工具函式
+// ------------------
+const getLatLngFromPhoto = (file) =>
+  new Promise((resolve) => {
+    if (!file) return resolve(null);
+
+    EXIF.getData(file, function () {
+      const latExif = EXIF.getTag(this, "GPSLatitude");
+      const lngExif = EXIF.getTag(this, "GPSLongitude");
+      const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+      const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
+
+      if (!latExif || !lngExif) return resolve(null);
+
+      const dmsToDd = (dms, ref) => {
+        const deg = dms[0].numerator / dms[0].denominator;
+        const min = dms[1].numerator / dms[1].denominator;
+        const sec = dms[2].numerator / dms[2].denominator;
+        let dd = deg + min / 60 + sec / 3600;
+        if (ref === "S" || ref === "W") dd = -dd;
+        return dd;
+      };
+
+      resolve({
+        lat: dmsToDd(latExif, latRef),
+        lng: dmsToDd(lngExif, lngRef),
+      });
+    });
+  });
+
+const reverseGeocode = async (lat, lng) => {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=zh-TW`
+  );
+  const data = await res.json();
+  const addr = data.address || {};
+
+  const county = addr.county || addr.city || addr.state;
+  const town = addr.town || addr.city_district || addr.suburb;
+
+  return { county, town };
 };
 
 export default function App() {
@@ -61,33 +135,13 @@ export default function App() {
     if (!selectedFile) return;
     setFile(selectedFile);
 
-    let lat = null, lng = null;
+    const photoLoc = await getLatLngFromPhoto(selectedFile);
 
-    await new Promise(resolve => {
-      EXIF.getData(selectedFile, function () {
-        const latExif = EXIF.getTag(this, "GPSLatitude");
-        const lngExif = EXIF.getTag(this, "GPSLongitude");
-        const latRef = EXIF.getTag(this, "GPSLatitudeRef");
-        const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
-
-        if (latExif && lngExif) {
-          const dmsToDd = (dms, ref) => {
-            let deg = dms[0].numerator / dms[0].denominator;
-            let min = dms[1].numerator / dms[1].denominator;
-            let sec = dms[2].numerator / dms[2].denominator;
-            let dd = deg + min / 60 + sec / 3600;
-            if (ref === "S" || ref === "W") dd = -dd;
-            return dd;
-          };
-          lat = dmsToDd(latExif, latRef);
-          lng = dmsToDd(lngExif, lngRef);
-        }
-        resolve();
-      });
-    });
-
-    if (lat && lng) setManualLocation([lat, lng]);
-    else setManualLocation(null);
+    if (photoLoc) setManualLocation([photoLoc.lat, photoLoc.lng]);
+    else {
+      alert("⚠️ 這張照片沒有 GPS 資訊，請手動在地圖點選位置");
+      setManualLocation(null);
+    }
   };
 
   const handleUpload = async () => {
@@ -95,49 +149,67 @@ export default function App() {
     if (!manualLocation) { alert("請先在地圖上點選位置"); return; }
 
     setUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "trashmap_unsigned");
 
-    const res = await fetch("https://api.cloudinary.com/v1_1/dwhn02tn5/image/upload", {
-      method: "POST",
-      body: formData
-    });
-    const data = await res.json();
-    const imageUrl = data.secure_url;
+    try {
+      const geo = await reverseGeocode(manualLocation[0], manualLocation[1]);
+      const key = geo.county && geo.town ? `${geo.county}_${geo.town}` : null;
 
-    await addDoc(collection(db, "images"), {
-      id: uuidv4(),
-      lat: manualLocation[0],
-      lng: manualLocation[1],
-      timestamp: new Date().toISOString(),
-      imageUrl,
-      level: trashLevel
-    });
+      let team =
+        (key && CLEANING_TEAMS_BY_TOWN[key]) ||
+        CLEANING_TEAMS_BY_TOWN[geo.county] || {
+          name: "當地清潔隊（尚未建檔）",
+          phone: "1999"
+        };
 
-    setMarkers(prev => [...prev, {
-      lat: manualLocation[0],
-      lng: manualLocation[1],
-      timestamp: new Date().toISOString(),
-      imageUrl,
-      level: trashLevel
-    }]);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "trashmap_unsigned");
 
-    setFile(null);
-    setManualLocation(null);
-    setTrashLevel(3);
-    setUploading(false);
-    alert("上傳完成！");
+      const res = await fetch("https://api.cloudinary.com/v1_1/dwhn02tn5/image/upload", {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+      const imageUrl = data.secure_url;
+
+      await addDoc(collection(db, "images"), {
+        id: uuidv4(),
+        lat: manualLocation[0],
+        lng: manualLocation[1],
+        timestamp: new Date().toISOString(),
+        imageUrl,
+        level: trashLevel
+      });
+
+      setMarkers(prev => [...prev, {
+        lat: manualLocation[0],
+        lng: manualLocation[1],
+        timestamp: new Date().toISOString(),
+        imageUrl,
+        level: trashLevel
+      }]);
+
+      alert(`✅ 上傳完成！
+📍 ${geo.county} ${geo.town}
+☎ ${team.name}
+📞 ${team.phone}`);
+
+      setFile(null);
+      setManualLocation(null);
+      setTrashLevel(3);
+
+    } catch (err) {
+      alert("上傳或定位失敗：" + err);
+    } finally {
+      setUploading(false);
+    }
   };
 
-  // ======================
-  // 第一畫面（加背景）
-  // ======================
   if (step === "start") return (
     <div className="start-screen">
       <h1>全民科學垃圾回報APP</h1>
 
-      <div className="instructions">
+      <div className="instructions" style={{ color: "#000" }}>
         <p>📌 操作說明：</p>
         <ul style={{ textAlign: "left" }}>
           <li>選擇或拍攝垃圾照片</li>
@@ -162,15 +234,7 @@ export default function App() {
   return (
     <div className="container">
       <h1>全民科學垃圾回報APP</h1>
-  
 
-<div className="legend-wrapper">
-    <img
-      src={`${process.env.PUBLIC_URL}/legend.png`}
-      alt="垃圾等級對照表"
-      className="legend"
-    />
-  </div>
       <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"10px" }}>
         <div style={{ flex:1, paddingRight:"20px" }}>
           <input type="file" accept="image/*" onChange={handleFileChange} />
@@ -188,15 +252,15 @@ export default function App() {
 
           {uploading && <p>上傳中...</p>}
           <button onClick={handleUpload} disabled={uploading}>上傳</button>
+
+          <a
+            href="https://forms.gle/u9uHmAygxK5fRkmc7"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <button style={{ marginTop: "10px" }}>意見回饋</button>
+          </a>
         </div>
-<a
-  href="https://forms.gle/u9uHmAygxK5fRkmc7"
-  target="_blank"
-  rel="noopener noreferrer"
->
-  <button style={{ marginTop: "10px" }}>意見回饋</button>
-</a>
-      
       </div>
 
       <MapContainer center={[23.7, 120.53]} zoom={10} className="map-container">
@@ -207,7 +271,7 @@ export default function App() {
         {markers.map((m, idx) => (
           <Marker key={idx} position={[m.lat, m.lng]} icon={getMarkerIcon(levelColors[m.level || 3])}>
             <Popup className="popup">
-              <img src={m.imageUrl} alt="uploaded"className="popup-image"  />
+              <img src={m.imageUrl} alt="uploaded" className="popup-image" />
               <br />等級：{m.level || 3}<br />{m.timestamp}
             </Popup>
           </Marker>
@@ -222,3 +286,4 @@ export default function App() {
     </div>
   );
 }
+
