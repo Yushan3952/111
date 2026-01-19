@@ -23,7 +23,7 @@ module.exports = async (req, res) => {
       from: "sow112021012@gmail.com",
       to: "sow112021012@gmail.com",
       // 修正點：加上反引號
-      subject: 垃圾回報協助通知 (等級 ${level}), 
+      subject: `垃圾回報協助通知 (等級 ${level})`, 
       // 修正點：加上反引號，支援多行 HTML 與變數插入
       html: `
         <h3>垃圾回報協助通知</h3>
