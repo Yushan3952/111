@@ -163,51 +163,44 @@ export default function App() {
       }]);
 
       // 若使用者選需要協助 → 呼叫 /api/send-email
-      if (needHelp === "是") {
-        await fetch("/api/send-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: helpEmail,
-            phone: helpPhone,
-            location: manualLocation,
-            level: trashLevel,
-            imageUrl
-          })
-        });
-        const emailData = await emailRes.json();
+      // 若使用者選需要協助 → 呼叫 /api/send-email
+if (needHelp === "是") {
+  const emailRes = await fetch("/api/send-email", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: helpEmail,
+      phone: helpPhone,
+      location: manualLocation,
+      level: trashLevel,
+      imageUrl
+    })
+  });
 
-if (!emailRes.ok) {
-  throw new Error(emailData.message || "寄信失敗");
-}
+  const emailData = await emailRes.json();
 
-        alert("✅ 上傳完成！\n"+
-             " 我們會協助聯絡清潔隊的\n"+
-        "📍 " + geo.county + " " + geo.town + "\n" +
+  if (!emailRes.ok) {
+    console.error("Email API error:", emailData);
+    throw new Error(emailData.message || "寄信失敗");
+  }
+
+  alert(
+    "✅ 上傳完成！\n" +
+    "我們會協助聯絡清潔隊的\n" +
+    "📍 " + geo.county + " " + geo.town + "\n" +
     "☎ " + team.name + "\n" +
-    "📞 " + team.phone);
-      } else {
-        alert("✅ 上傳完成！\n" +
+    "📞 " + team.phone
+  );
+} else {
+  alert(
+    "✅ 上傳完成！\n" +
     "如需自行聯絡清潔隊，請洽：\n" +
     "📍 " + geo.county + " " + geo.town + "\n" +
     "☎ " + team.name + "\n" +
-    "📞 " + team.phone);
-      }
+    "📞 " + team.phone
+  );
+}
 
-      // 清空欄位
-      setFile(null);
-      setManualLocation(null);
-      setTrashLevel(3);
-      setNeedHelp("否");
-      setHelpEmail("");
-      setHelpPhone("");
-
-    } catch (err) {
-      alert("上傳或寄信失敗：" + err.message);
-    } finally {
-      setUploading(false);
-    }
-  };
 
   if (step === "start") return (
     <div className="start-screen">
