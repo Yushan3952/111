@@ -189,7 +189,7 @@ export default function App() {
         level: trashLevel
       }]);
 
-      alert(`✅ 上傳完成！<br>
+      alert(`✅ 上傳完成！
       如需及時清理請洽
 📍 ${geo.county} ${geo.town}
 ☎ ${team.name}
