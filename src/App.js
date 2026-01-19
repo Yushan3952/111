@@ -175,7 +175,7 @@ export default function App() {
             imageUrl
           })
         });
-        alert("✅ 上傳完成！系統已通知清潔隊協助");
+        alert("✅ 上傳完成！我們會協助聯絡清潔隊的");
       } else {
         alert("✅ 上傳完成！");
       }
