@@ -162,13 +162,14 @@ export default function App() {
         level: trashLevel
       }]);
 
-fetch("/api/send-email", { method: "POST" })
-  .then(res => res.json())
-  .then(data => console.log(data))
-  .catch(err => console.error(err));
-
-
-      });
+// 4️⃣ 若使用者選需要協助 → 呼叫 /api/send-email 
+      if (needHelp === "是") { const emailRes = await fetch("/api/send-email",
+      { method: "POST", headers: { "Content-Type": "application/json" }, 
+       body: JSON.stringify({ 
+         email: helpEmail, 
+         phone: helpPhone, 
+         location: manualLocation, 
+         level: trashLevel, imageUrl }) });
       const emailData = await emailRes.json();
       if (!emailRes.ok) throw new Error(emailData.message || "寄信失敗");
 
