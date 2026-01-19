@@ -165,7 +165,7 @@ export default function App() {
        // 4️⃣ 若使用者選需要協助 → 呼叫 /api/send-email
     if (needHelp === "是") {
       const emailRes = await fetch("/api/send-email", {
-      }
+      })
 
       });
 
