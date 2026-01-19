@@ -185,7 +185,7 @@ export default function App() {
     "如需自行聯絡清潔隊，請洽：\n" +
     "📍 " + geo.county + " " + geo.town + "\n" +
     "☎ " + team.name + "\n" +
-    "📞 " + team.phone");
+    "📞 " + team.phone);
       }
 
       // 清空欄位
