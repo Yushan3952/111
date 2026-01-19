@@ -175,7 +175,11 @@ export default function App() {
             imageUrl
           })
         });
-        alert("✅ 上傳完成！我們會協助聯絡清潔隊的");
+        alert("✅ 上傳完成！\n"
+             " 我們會協助聯絡清潔隊的\n"
+        "📍 " + geo.county + " " + geo.town + "\n" +
+    "☎ " + team.name + "\n" +
+    "📞 " + team.phone);
       } else {
         alert("✅ 上傳完成！");
       }
