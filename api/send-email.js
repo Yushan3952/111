@@ -5,12 +5,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: "Only POST allowed" });
   }
 
-  try {
-    const { email, phone, location, level, imageUrl } = req.body;
-
-    if (!email || !phone || !location || !level || !imageUrl) {
-      return res.status(400).json({ message: "Missing fields" });
-    }
+  
 
     // 🔹 設定你的 Gmail
     const transporter = nodemailer.createTransport({
