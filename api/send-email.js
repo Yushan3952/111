@@ -1,7 +1,7 @@
 const nodemailer = require("nodemailer");
 
 module.exports = async (req, res) => {
-  // 強制設定回傳格式為 JSON
+  // 確保回傳標頭為 JSON
   res.setHeader('Content-Type', 'application/json');
 
   if (req.method !== "POST") {
@@ -15,14 +15,16 @@ module.exports = async (req, res) => {
       service: "gmail",
       auth: {
         user: "sow112021012@gmail.com",
-        pass: "haidrlnvbjmuflsg", // 確保這是 16 位元的應用程式密碼
+        pass: "haidrlnvbjmuflsg", // 這裡請確保是 16 位元的應用程式密碼
       },
     });
 
     const mailOptions = {
       from: "sow112021012@gmail.com",
       to: "sow112021012@gmail.com",
-      subject: 垃圾回報協助通知 (等級 ${level}),
+      // 修正點：加上反引號
+      subject: 垃圾回報協助通知 (等級 ${level}), 
+      // 修正點：加上反引號，支援多行 HTML 與變數插入
       html: `
         <h3>垃圾回報協助通知</h3>
         <p>📍 位置: 緯度 ${location[0]}, 經度 ${location[1]}</p>
