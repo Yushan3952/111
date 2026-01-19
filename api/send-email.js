@@ -24,13 +24,10 @@ export default async function handler(req, res) {
     const mailOptions = {
       from: "sow112021012@gmail.com",
       to: "sow112021012@gmail.com",         // ← 收信人（你自己）
-      subject: `垃圾回報協助通知 (等級 ${level})`,
-      html: `
-        <h3>垃圾回報協助通知</h3>
-        <p>📍 位置: 緯度 ${location[0]}, 經度 ${location[1]}</p>
-        <p>等級: ${level}</p>
-        <p>使用者 Gmail: ${email}</p>
-        <p>使用者電話: ${phone}</p>
+      subject: `垃圾回報協助通知 
+      html: 
+        <h3>垃圾回報協助通知12345</h3>
+       
       
       `,
     };
