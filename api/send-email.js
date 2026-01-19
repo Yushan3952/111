@@ -1,37 +1,22 @@
-import nodemailer from "nodemailer";
-
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Only POST allowed" });
-  }
-
-  
-
-    // 🔹 設定你的 Gmail
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: "sow112021012@gmail.com",       // ← 改成你的 Gmail
-        pass: "haidrlnvbjmuflsg",      // ← 建議使用 App Password
-      },
+// 單純測試 /api/send-email
+const testSendEmail = async () => {
+  try {
+    const res = await fetch("/api/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        test: true // 只放個測試欄位，不需要真實資料
+      })
     });
 
-    const mailOptions = {
-      from: "sow112021012@gmail.com",
-      to: "sow112021012@gmail.com",         // ← 收信人（你自己）
-      subject: `垃圾回報協助通知 
-      html: 
-        <h3>垃圾回報協助通知12345</h3>
-       
-      
-      `,
-    };
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "寄信失敗");
 
-    await transporter.sendMail(mailOptions);
-
-    res.status(200).json({ message: "Email sent successfully" });
+    console.log("✅ /api/send-email 已執行", data);
   } catch (err) {
-    console.error("Send email error:", err);
-    res.status(500).json({ message: "Failed to send email", error: err.message });
+    console.error("❌ 執行 /api/send-email 失敗:", err);
   }
-}
+};
+
+// 在需要的時候呼叫它，例如按鈕點擊：
+<button onClick={testSendEmail}>測試寄信 API</button>
