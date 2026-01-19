@@ -200,6 +200,15 @@ if (needHelp === "是") {
     "📞 " + team.phone
   );
 }
+const handleUpload = async () => {
+  try {
+    // ...所有上傳邏輯
+  } catch (err) {
+    alert("上傳或寄信失敗：" + err.message);
+  } finally {
+    setUploading(false);
+  }
+};
 
 
   if (step === "start") return (
