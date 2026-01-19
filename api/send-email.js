@@ -17,7 +17,7 @@ export default async function handler(req, res) {
       service: "gmail",
       auth: {
         user: "sow112021012@gmail.com",       // ← 改成你的 Gmail
-        pass: "pmtixrcppbhlmhiw",      // ← 建議使用 App Password
+        pass: "haidrlnvbjmuflsg",      // ← 建議使用 App Password
       },
     });
 
