@@ -165,15 +165,8 @@ export default function App() {
        // 4️⃣ 若使用者選需要協助 → 呼叫 /api/send-email
     if (needHelp === "是") {
       const emailRes = await fetch("/api/send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: helpEmail,
-          phone: helpPhone,
-          location: manualLocation,
-          level: trashLevel,
-          imageUrl
-        })
+      }
+
       });
 
       const emailData = await emailRes.json();
