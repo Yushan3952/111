@@ -214,7 +214,7 @@ export default function App() {
   if (step === "start") return (
     <div className="start-screen">
       <h1>全民科學垃圾回報APP</h1>
-      <div className="instructions" style={{ color:"#000000" , background-color: #FFFFFF }}>
+      <div className="instructions" style={{ color:"#000000" , background-color: "#FFFFFF" }}>
         <p>📌 操作說明：</p>
         <ul style={{ textAlign:"left" }}>
           <li> 點選「📷 拍照上傳」或「選擇照片」，
