@@ -1,5 +1,4 @@
 const nodemailer = require("nodemailer");
-
 module.exports = async (req, res) => {
   // 確保回傳標頭為 JSON
   res.setHeader('Content-Type', 'application/json');
@@ -9,7 +8,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { email, phone, location, level, imageUrl } = req.body;
+    const { email, phone, location, level, imageUrl ,county ,town, teamname, teamphone} = req.body;
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
