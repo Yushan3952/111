@@ -169,7 +169,13 @@ export default function App() {
          email: helpEmail, 
          phone: helpPhone, 
          location: manualLocation, 
-         level: trashLevel, imageUrl }) });
+         level: trashLevel, 
+         imageUrl,
+         county: geo.county,
+         town: geo.town,
+         name: team.name,
+         phone: team.phone
+       }) });
       const emailData = await emailRes.json();
       if (!emailRes.ok) throw new Error(emailData.message || "寄信失敗");
 
