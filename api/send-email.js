@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
         <p>使用者 Gmail: ${email}</p>
         <p>使用者電話: ${phone}</p>
         <p>清潔隊位置: ${county},${town}</p>
-        <p>清潔隊位置: ${teamname},${teamphone}</p>
+        <p>清潔隊資訊: ${teamname},${teamphone}</p>
         <p>圖片連結: <a href="${imageUrl}">${imageUrl}</a></p>
       `,
     };
