@@ -173,8 +173,8 @@ export default function App() {
          imageUrl,
          county: geo.county,
          town: geo.town,
-         name: team.name,
-         phone: team.phone
+         teamname: team.name,
+         teamphone: team.phone
        }) });
       const emailData = await emailRes.json();
       if (!emailRes.ok) throw new Error(emailData.message || "寄信失敗");
