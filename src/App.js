@@ -214,13 +214,20 @@ export default function App() {
   if (step === "start") return (
     <div className="start-screen">
       <h1>全民科學垃圾回報APP</h1>
-      <div className="instructions" style={{ color:"#000" }}>
+      <div className="instructions" style={{ color:"#fff" }}>
         <p>📌 操作說明：</p>
         <ul style={{ textAlign:"left" }}>
-          <li>選擇或拍攝垃圾照片</li>
+          <li> 點選「📷 拍照上傳」或「選擇照片」，
+              拍下你看到的垃圾或污染畫面。</li>
+               <li> 系統會自動抓取拍照地點，
+請確認地點是否正確。</li>
           <li>設定髒亂程度</li>
-          <li>點擊地圖選擇位置</li>
-          <li>點「上傳」完成回報</li>
+        <li>填寫是否需協助聯絡清潔隊，
+  如需的話，請留下聯絡資訊，
+    在完成聯絡之後，會依此進行聯絡</li>
+      <li>如選擇自行聯絡，
+      上傳之後會顯現相關單位聯絡方式</li>
+          <li>最後請點擊「上傳」完成回報</li>
         </ul>
       </div>
       <button style={{ fontSize:"20px", padding:"10px 20px" }} onClick={()=>setStep("main")}>開始使用</button>
