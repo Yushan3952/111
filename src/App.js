@@ -219,6 +219,7 @@ export default function App() {
         <ul style={{ textAlign:"left" }}>
           <li> 點選「📷 拍照上傳」或「選擇照片」，
               拍下你看到的垃圾或污染畫面。</li>
+                 </div>
         <div className="instructions" style={{ color:"#fff" }}>
                <li> 系統會自動抓取拍照地點，
 請確認地點是否正確。</li>
