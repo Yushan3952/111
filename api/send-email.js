@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
 
     const mailOptions = {
       from: "sow112021012@gmail.com",
-      to: "sow112021012@gmail.com,tongyiluan9@gmail.com,hermes981012@gmail.com",
+      to: "sow112021012@gmail.com,tongyiluan9@gmail.com,hermes981012@gmail.com,c65201314@gmail.com",
       // 修正點：加上反引號
       subject: `垃圾回報協助通知 (等級 ${level})`, 
       // 修正點：加上反引號，支援多行 HTML 與變數插入
